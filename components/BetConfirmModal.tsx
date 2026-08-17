@@ -138,6 +138,45 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
 
   const handleAction = async () => {
     if (amount <= 0) return;
+
+    const isUnconfigured = (addr?: string) =>
+      !addr ||
+      addr === "0x0000000000000000000000000000000000000000" ||
+      addr === "0x0000000000000000000000000000000000000001";
+
+    // If market or AMM or token address is not deployed / zero address, record simulated bet
+    if (isUnconfigured(market.address) || isUnconfigured(ammAddress)) {
+      const mockHash = `0x${Array.from({ length: 64 }, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      ).join("")}`;
+
+      try {
+        const storedBets = JSON.parse(localStorage.getItem("4cast_bets") || "[]");
+        const newBet = {
+          id: `bet-${Date.now()}`,
+          txHash: mockHash,
+          marketId: market.id,
+          marketTitle: market.title,
+          side,
+          amount,
+          placedAt: new Date().toISOString(),
+          status: "open",
+        };
+        localStorage.setItem("4cast_bets", JSON.stringify([newBet, ...storedBets]));
+      } catch (err) {
+        console.warn("Failed to store bet in localStorage:", err);
+      }
+
+      setPlacedTx(mockHash);
+      setPlaced(true);
+      setTimeout(() => {
+        setPlaced(false);
+        setPlacedTx("");
+        onClose();
+      }, 3000);
+      return;
+    }
+
     if (needsApproval) {
       // Approve maximum possible value or high value
       approveHook.approve(parseUnits("1000000", COLLATERAL_DECIMALS));

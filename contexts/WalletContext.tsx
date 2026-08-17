@@ -197,6 +197,42 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       // Directly request accounts — this triggers the wallet popup
       await eth.request({ method: "eth_requestAccounts" });
+
+      // Ensure wallet is switched to Arc Testnet (Chain ID 5042002 -> 0x4cef72)
+      try {
+        await eth.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x4cef72" }],
+        });
+      } catch (switchError: any) {
+        // If chain is not yet added in wallet, add Arc Testnet
+        if (
+          switchError.code === 4902 ||
+          switchError.message?.includes("Unrecognized chain") ||
+          switchError.message?.includes("not found")
+        ) {
+          try {
+            await eth.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: "0x4cef72",
+                  chainName: "Arc Testnet",
+                  nativeCurrency: {
+                    name: "USDC",
+                    symbol: "USDC",
+                    decimals: 18,
+                  },
+                  rpcUrls: ["https://rpc.testnet.arc.network"],
+                  blockExplorerUrls: ["https://testnet.arcscan.app"],
+                },
+              ],
+            });
+          } catch (addError) {
+            console.warn("Failed to add Arc Testnet to wallet:", addError);
+          }
+        }
+      }
     } catch (err) {
       console.error("EVM wallet connection rejected:", err);
       return;
