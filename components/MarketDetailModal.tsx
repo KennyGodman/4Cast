@@ -105,7 +105,7 @@ function MarketDetailModalInner({
   );
 
   const displayVolume = market.isReal
-    ? (volume ?? "0.00 ARCT")
+    ? (volume ?? "0.00 USDC")
     : market.volume;
 
   // Load balances
@@ -704,7 +704,7 @@ contract EventBasedPredictionMarket {
                         >
                           {b.side as string}
                         </span>
-                        <span style={{ color: "var(--text-0)", fontWeight: 600 }}>{b.amount as number} ARCT</span>
+                        <span style={{ color: "var(--text-0)", fontWeight: 600 }}>{b.amount as number} USDC</span>
                         <span style={{ color: "var(--text-3)", fontSize: "0.7rem" }}>{formattedTime}</span>
                       </div>
                     );
@@ -843,7 +843,7 @@ contract EventBasedPredictionMarket {
                         <>
                           <div style={{ fontSize: "0.7rem", color: "var(--text-2)", lineHeight: 1.4 }}>
                             No active proposal. Propose the outcome to the oracle. Requires a bond of{" "}
-                            {parseFloat(formatUnits(bondBigInt, COLLATERAL_DECIMALS))} ARCT.
+                            {parseFloat(formatUnits(bondBigInt, COLLATERAL_DECIMALS))} USDC.
                           </div>
                           {needsOracleApproval ? (
                             <button
@@ -863,7 +863,7 @@ contract EventBasedPredictionMarket {
                             >
                               {approveOracleHook.isPending || approveOracleHook.isConfirming
                                 ? "Approving..."
-                                : "Approve ARCT for Oracle"}
+                                : "Approve USDC for Oracle"}
                             </button>
                           ) : (
                             <div style={{ display: "flex", gap: "0.4rem", width: "100%" }}>
@@ -1031,7 +1031,7 @@ contract EventBasedPredictionMarket {
                         marginBottom: "0.4rem",
                       }}
                     >
-                      AMOUNT (ARCT TOKENS)
+                      AMOUNT (USDC)
                     </label>
                     <input
                       id="bet-amount-input"
@@ -1097,13 +1097,13 @@ contract EventBasedPredictionMarket {
                     }}
                   >
                     {[
-                      { label: "Your bet", val: `${amount} ARCT`, color: "var(--text-0)" },
+                      { label: "Your bet", val: `${amount} USDC`, color: "var(--text-0)" },
                       {
                         label: "If correct, receive",
                         val: `${estimatedPayout} ${side}`,
                         color: "var(--yes-green)",
                       },
-                      { label: "Potential profit", val: `+${profit} ARCT`, color: "var(--resolving)" },
+                      { label: "Potential profit", val: `+${profit} USDC`, color: "var(--resolving)" },
                     ].map(({ label, val, color }) => (
                       <div
                         key={label}
@@ -1222,8 +1222,8 @@ contract EventBasedPredictionMarket {
                       {isPending
                         ? "Confirming transaction..."
                         : needsAmmApproval
-                        ? "Approve ARCT for Trading"
-                        : `Place ${side} Bet — ${amount} ARCT`}
+                        ? "Approve USDC for Trading"
+                        : `Place ${side} Bet — ${amount} USDC`}
                     </button>
                   )}
 

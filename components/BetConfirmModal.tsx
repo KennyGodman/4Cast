@@ -318,7 +318,7 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "#9ca3af" }}>
-                  ARCT
+                  USDC
                 </span>
                 <input
                   type="number"
@@ -475,7 +475,7 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
                   You put
                 </div>
                 <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "1rem", color: "#111827" }}>
-                  {amount} ARCT
+                  {amount} USDC
                 </div>
               </div>
               <ArrowRight size={16} color="#9ca3af" />
@@ -597,8 +597,8 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
               {isPending
                 ? "Processing transaction..."
                 : needsApproval
-                ? "Approve ARCT Collateral"
-                : `${side === "YES" ? "📈" : "📉"} Place ${side} Bet — ${amount} ARCT`}
+                ? "Approve USDC Collateral"
+                : `${side === "YES" ? "📈" : "📉"} Place ${side} Bet — ${amount} USDC`}
             </button>
           )}
 

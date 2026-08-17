@@ -107,7 +107,7 @@ export function CreateMarket({ onCreateMarket }: CreateMarketProps) {
     "Deploying Event-Based Prediction Market contract to Arc Testnet...",
     "Approving proposer rewards and requesting resolution price from UMA Oracle...",
     "Deploying Prediction Market AMM Liquidity Pool contract...",
-    "Funding AMM and seeding pool with 1,000 ARCT initial liquidity...",
+    "Funding AMM and seeding pool with 1,000 USDC initial liquidity...",
     "Market deployed successfully! Finalizing details...",
   ];
 
@@ -407,7 +407,7 @@ export function CreateMarket({ onCreateMarket }: CreateMarketProps) {
                   marginBottom: "0.4rem",
                 }}
               >
-                INITIAL LIQUIDITY (1,000 ARCT HARDCODED)
+                INITIAL LIQUIDITY (1,000 USDC HARDCODED)
               </label>
               <div
                 style={{
@@ -423,7 +423,7 @@ export function CreateMarket({ onCreateMarket }: CreateMarketProps) {
                 }}
               >
                 <Info size={14} color="var(--teal)" />
-                <span>Markets are automatically seeded with 1,000 ARCT from the deployer account.</span>
+                <span>Markets are automatically seeded with 1,000 USDC from the deployer account.</span>
               </div>
             </div>
           </div>
@@ -558,7 +558,7 @@ export function CreateMarket({ onCreateMarket }: CreateMarketProps) {
                     gap: "1.5rem",
                   }}
                 >
-                  <span>Pool: 1,000 ARCT</span>
+                  <span>Pool: 1,000 USDC</span>
                   {form.resolveDate && <span>Resolves: {form.resolveDate}</span>}
                 </div>
               </div>

@@ -59,8 +59,8 @@ export function MarketCard({
 
   const displayVolume = isReal
     ? hasAmmPrice
-      ? (volume ?? "0.00 ARCT")
-      : "0.00 ARCT"
+      ? (volume ?? "0.00 USDC")
+      : "0.00 USDC"
     : market.volume;
 
   const handleBet = (e: React.MouseEvent, side: "YES" | "NO") => {

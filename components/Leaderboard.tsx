@@ -142,7 +142,7 @@ export function Leaderboard() {
                     marginTop: "0.2rem",
                   }}
                 >
-                  +{player.profit.toLocaleString()} ARCT
+                  +{player.profit.toLocaleString()} USDC
                 </div>
                 <span
                   style={{

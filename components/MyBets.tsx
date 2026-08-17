@@ -113,14 +113,14 @@ export function MyBets({ bets, markets, onClaimPayout }: MyBetsProps) {
           {
             icon: Activity,
             label: "TOTAL WAGERED",
-            value: `${totalInvested.toLocaleString()} ARCT`,
+            value: `${totalInvested.toLocaleString()} USDC`,
             color: "var(--text-2)",
           },
           { icon: Clock, label: "OPEN POSITIONS", value: openBets.length.toString(), color: "var(--resolving)" },
           {
             icon: TrendingUp,
             label: "TOTAL P&L",
-            value: `${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)} ARCT`,
+            value: `${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)} USDC`,
             color: pnl >= 0 ? "var(--yes-green)" : "var(--no-red)",
           },
         ].map(({ icon: Icon, label, value, color }) => (
@@ -251,7 +251,7 @@ function OpenBetRow({ bet, market }: { bet: Bet; market: MarketCardData | undefi
           </span>
           <div style={{ textAlign: "right" }}>
             <div className="font-mono" style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-0)" }}>
-              {bet.amount} ARCT
+              {bet.amount} USDC
             </div>
             <div className="font-mono" style={{ fontSize: "0.65rem", color: "var(--resolving)" }}>
               {formattedBalance !== "0.00" ? `${formattedBalance} tokens held` : "Pending tx..."}
@@ -393,7 +393,7 @@ function SettledBetRow({
             marginRight: "1rem",
           }}
         >
-          {won ? `+${(bet.amount * 2).toFixed(0)} ARCT` : `-${bet.amount} ARCT`}
+          {won ? `+${(bet.amount * 2).toFixed(0)} USDC` : `-${bet.amount} USDC`}
         </span>
 
         {won && market && (
