@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4Cast | Prediction Markets on Arc Network</title>
+    <meta name="description" content="A binary prediction market backed by UMA Optimistic Oracle and Arc AMM on Arc network." />
+    <link rel="icon" type="image/png" href="/predgen-logo.png" />
+    
+    <!-- Google Fonts for rich aesthetic typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="min-h-full flex flex-col">
+    <!-- Polyfills for web3/node libraries that reference process/global in browser -->
+    <script>
+      window.global = window;
+      window.process = window.process || { env: {} };
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
