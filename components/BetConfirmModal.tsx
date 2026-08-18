@@ -196,14 +196,18 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             ? market.address
             : "0x7a250d5630b4cf539739df2c5dacb4c659f2488d";
 
-        // Prompt Rabby / EVM wallet for on-chain Arc Testnet transaction
+        // Calculate exact hex value in wei for native USDC (18 decimals on Arc Testnet)
+        const amountWei = parseUnits(amount.toString(), COLLATERAL_DECIMALS);
+        const hexValue = "0x" + amountWei.toString(16);
+
+        // Prompt Rabby / EVM wallet for on-chain Arc Testnet transaction with bet value
         const txHash = await eth.request({
           method: "eth_sendTransaction",
           params: [
             {
               from: address,
               to: targetAddress,
-              value: "0x0",
+              value: hexValue,
               data: "0x3863617374", // "4cast" hex identifier
             },
           ],

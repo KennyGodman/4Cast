@@ -36,7 +36,7 @@ export function Header({
   }, []);
 
   // Fetch native USDC balance (USDC is the native token on Arc Testnet)
-  const { data: usdcBalance, isLoading: isBalanceLoading } = useBalance({
+  const { data: usdcBalance, isLoading: isBalanceLoading, refetch: refetchBalance } = useBalance({
     address: address,
     query: {
       enabled: mounted && !!address,
@@ -45,6 +45,19 @@ export function Header({
       retry: false,
     },
   });
+
+  // Instantly refetch on-chain balance when a bet is placed
+  useEffect(() => {
+    const handleBetsUpdated = () => {
+      if (refetchBalance) refetchBalance();
+    };
+    window.addEventListener("4cast_bets_updated", handleBetsUpdated);
+    window.addEventListener("storage", handleBetsUpdated);
+    return () => {
+      window.removeEventListener("4cast_bets_updated", handleBetsUpdated);
+      window.removeEventListener("storage", handleBetsUpdated);
+    };
+  }, [refetchBalance]);
 
   const formatAddress = (addr: string | undefined) => {
     if (!addr) return "";
