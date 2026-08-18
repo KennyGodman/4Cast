@@ -8,6 +8,7 @@ import { useMarketCardData, useMarketState, useTokenBalances, useOracleAllowance
 import { COLLATERAL_DECIMALS, OO_V2_ADDRESS } from "@/lib/contracts/addresses";
 import { OracleState } from "@/lib/contracts/types";
 import { type MarketCardData } from "@/lib/markets";
+import { saveUserBet, generateTxHash, type UserBet } from "@/lib/bets";
 
 function formatPool(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
@@ -19,8 +20,8 @@ interface MarketDetailModalProps {
   market: MarketCardData;
   onClose: () => void;
   onConnectClick: () => void;
-  bets: Record<string, unknown>[];
-  onPlaceBet: (marketId: string, side: "YES" | "NO", amount: number) => Promise<string | undefined>;
+  bets: UserBet[];
+  onPlaceBet: (marketId: string, side: "YES" | "NO", amount: number, txHash?: string) => Promise<string | undefined>;
   onShowAlert?: (alert: { title: string; message: string }) => void;
 }
 
@@ -61,7 +62,7 @@ function MarketDetailModalInner({
   market: MarketCardData;
   onClose: () => void;
   onConnectClick: () => void;
-  bets: Record<string, unknown>[];
+  bets: UserBet[];
   onPlaceBet: MarketDetailModalProps["onPlaceBet"];
   onShowAlert?: MarketDetailModalProps["onShowAlert"];
 }) {
@@ -174,18 +175,30 @@ function MarketDetailModalInner({
   const activeBuyHook = side === "YES" ? buyYesHook : buyNoHook;
   useEffect(() => {
     if (activeBuyHook.isSuccess && activeBuyHook.hash) {
-      // Save local storage bet transaction record
-      onPlaceBet(market.id, side, parseFloat(amount)).then((tx) => {
-        if (tx) setPlacedTx(tx);
-        else setPlacedTx(activeBuyHook.hash!);
-        setBetPlaced(true);
-        setTimeout(() => {
-          setBetPlaced(false);
-          setPlacedTx("");
-        }, 5000);
-      });
+      const realTx = activeBuyHook.hash;
+      const newBet: UserBet = {
+        id: `bet-${Date.now()}`,
+        txHash: realTx,
+        marketId: market.id,
+        marketTitle: market.title,
+        side,
+        amount: parseFloat(amount),
+        placedAt: new Date().toISOString(),
+        status: "open",
+        claimed: false,
+      };
+      saveUserBet(newBet);
+      onPlaceBet(market.id, side, parseFloat(amount), realTx);
+
+      setPlacedTx(realTx);
+      setBetPlaced(true);
+      const timer = setTimeout(() => {
+        setBetPlaced(false);
+        setPlacedTx("");
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [activeBuyHook.isSuccess, activeBuyHook.hash, side, amount, market.id]);
+  }, [activeBuyHook.isSuccess, activeBuyHook.hash, side, amount, market.id, market.title, onPlaceBet]);
 
   // Clean bets for this market
   const marketBets = bets.filter((b) => b.marketId === market.id);
@@ -194,7 +207,41 @@ function MarketDetailModalInner({
   );
 
   const handleBet = async () => {
-    if (parseFloat(amount) <= 0) return;
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) return;
+
+    const isUnconfigured = (addr?: string) =>
+      !addr ||
+      addr === "0x0000000000000000000000000000000000000000" ||
+      addr.startsWith("0x000000000000000000000000000000000000000");
+
+    // If market or AMM is not deployed / zero address, record bet to My Bets
+    if (!market.isReal || isUnconfigured(market.address) || isUnconfigured(ammAddress)) {
+      const mockHash = generateTxHash();
+      const newBet: UserBet = {
+        id: `bet-${Date.now()}`,
+        txHash: mockHash,
+        marketId: market.id,
+        marketTitle: market.title,
+        side,
+        amount: numAmount,
+        placedAt: new Date().toISOString(),
+        status: "open",
+        claimed: false,
+      };
+
+      saveUserBet(newBet);
+      onPlaceBet(market.id, side, numAmount, mockHash);
+
+      setPlacedTx(mockHash);
+      setBetPlaced(true);
+      setTimeout(() => {
+        setBetPlaced(false);
+        setPlacedTx("");
+      }, 5000);
+      return;
+    }
+
     if (needsAmmApproval) {
       approveAmmHook.approve(parseUnits("1000000", COLLATERAL_DECIMALS));
     } else {

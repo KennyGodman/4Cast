@@ -25,6 +25,7 @@ interface MarketsPageProps {
   onConnectClick: () => void;
   onMarketClick: (market: MarketCardData) => void;
   onQuickBet: (market: MarketCardData, side: "YES" | "NO") => void;
+  onPlaceBet?: (marketId: string, side: "YES" | "NO", amount: number, txHash?: string) => Promise<string | undefined>;
   externalSearch?: string;
 }
 
@@ -34,6 +35,7 @@ export function MarketsPage({
   onConnectClick,
   onMarketClick,
   onQuickBet,
+  onPlaceBet,
   externalSearch = "",
 }: MarketsPageProps) {
   const [category, setCategory] = useState("All");
@@ -206,6 +208,7 @@ export function MarketsPage({
               onConnectClick={onConnectClick}
               onDetailClick={onMarketClick}
               onQuickBet={onQuickBet}
+              onPlaceBet={onPlaceBet}
             />
           ))}
         </div>

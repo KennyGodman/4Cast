@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Minus, Plus, ArrowRight } from "lucide-react";
+import { X, Minus, Plus, ArrowRight, ExternalLink } from "lucide-react";
 import { parseUnits, formatUnits, type Address } from "viem";
 import { useWallet } from "@/contexts/WalletContext";
 import { MarketAddressProvider, useMarketAddress } from "@/contexts/MarketAddressContext";
 import { useAMMState, useCalcBuy, useBuyYes, useBuyNo, useApproveArctForAMM, useAMMAllowances } from "@/hooks/useAMM";
 import { COLLATERAL_DECIMALS } from "@/lib/contracts/addresses";
+import { saveUserBet, generateTxHash, type UserBet } from "@/lib/bets";
 
 const PRESETS = [10, 50, 100, 500];
 
@@ -17,12 +18,14 @@ interface BetConfirmModalProps {
     category: string;
     yesPrice: number;
     noPrice: number;
+    isReal?: boolean;
   };
   initialSide?: "YES" | "NO";
   onClose: () => void;
+  onPlaceBet?: (marketId: string, side: "YES" | "NO", amount: number, txHash?: string) => Promise<string | undefined>;
 }
 
-export function BetConfirmModal({ market, initialSide = "YES", onClose }: BetConfirmModalProps) {
+export function BetConfirmModal({ market, initialSide = "YES", onClose, onPlaceBet }: BetConfirmModalProps) {
   const targetAmmAddress = (market.ammAddress || "0x0000000000000000000000000000000000000000") as Address;
   return (
     <MarketAddressProvider
@@ -33,6 +36,7 @@ export function BetConfirmModal({ market, initialSide = "YES", onClose }: BetCon
         market={market}
         initialSide={initialSide}
         onClose={onClose}
+        onPlaceBet={onPlaceBet}
       />
     </MarketAddressProvider>
   );
@@ -42,9 +46,10 @@ interface InnerProps {
   market: BetConfirmModalProps["market"];
   initialSide: "YES" | "NO";
   onClose: () => void;
+  onPlaceBet?: BetConfirmModalProps["onPlaceBet"];
 }
 
-function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
+function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: InnerProps) {
   const { address, isConnected, connectMetaMask } = useWallet();
   const { ammAddress } = useMarketAddress();
   const [side, setSide] = useState<"YES" | "NO">(initialSide);
@@ -99,20 +104,38 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
     return () => document.removeEventListener("keydown", fn);
   }, [onClose]);
 
-  // Success transaction updates
+  // Success transaction updates from real on-chain transaction
   const activeHook = side === "YES" ? buyYesHook : buyNoHook;
   useEffect(() => {
     if (activeHook.isSuccess && activeHook.hash) {
-      setPlacedTx(activeHook.hash);
+      const realTx = activeHook.hash;
+      const newBet: UserBet = {
+        id: `bet-${Date.now()}`,
+        txHash: realTx,
+        marketId: market.id,
+        marketTitle: market.title,
+        side,
+        amount,
+        placedAt: new Date().toISOString(),
+        status: "open",
+        claimed: false,
+      };
+
+      saveUserBet(newBet);
+      if (onPlaceBet) {
+        onPlaceBet(market.id, side, amount, realTx);
+      }
+
+      setPlacedTx(realTx);
       setPlaced(true);
       const timer = setTimeout(() => {
         setPlaced(false);
         setPlacedTx("");
         onClose();
-      }, 4000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [activeHook.isSuccess, activeHook.hash, onClose, side]);
+  }, [activeHook.isSuccess, activeHook.hash, onClose, side, amount, market.id, market.title, onPlaceBet]);
 
   const setAmt = (v: number) => {
     const n = Math.max(0.01, Math.min(10000, v));
@@ -142,29 +165,27 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
     const isUnconfigured = (addr?: string) =>
       !addr ||
       addr === "0x0000000000000000000000000000000000000000" ||
-      addr === "0x0000000000000000000000000000000000000001";
+      addr.startsWith("0x000000000000000000000000000000000000000");
 
-    // If market or AMM or token address is not deployed / zero address, record simulated bet
-    if (isUnconfigured(market.address) || isUnconfigured(ammAddress)) {
-      const mockHash = `0x${Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("")}`;
+    // If market or AMM is not deployed / zero address, record bet to My Bets history
+    if (!market.isReal || isUnconfigured(market.address) || isUnconfigured(ammAddress)) {
+      const mockHash = generateTxHash();
 
-      try {
-        const storedBets = JSON.parse(localStorage.getItem("4cast_bets") || "[]");
-        const newBet = {
-          id: `bet-${Date.now()}`,
-          txHash: mockHash,
-          marketId: market.id,
-          marketTitle: market.title,
-          side,
-          amount,
-          placedAt: new Date().toISOString(),
-          status: "open",
-        };
-        localStorage.setItem("4cast_bets", JSON.stringify([newBet, ...storedBets]));
-      } catch (err) {
-        console.warn("Failed to store bet in localStorage:", err);
+      const newBet: UserBet = {
+        id: `bet-${Date.now()}`,
+        txHash: mockHash,
+        marketId: market.id,
+        marketTitle: market.title,
+        side,
+        amount,
+        placedAt: new Date().toISOString(),
+        status: "open",
+        claimed: false,
+      };
+
+      saveUserBet(newBet);
+      if (onPlaceBet) {
+        onPlaceBet(market.id, side, amount, mockHash);
       }
 
       setPlacedTx(mockHash);
@@ -173,7 +194,7 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
         setPlaced(false);
         setPlacedTx("");
         onClose();
-      }, 3000);
+      }, 4000);
       return;
     }
 
@@ -181,7 +202,7 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
       // Approve maximum possible value or high value
       approveHook.approve(parseUnits("1000000", COLLATERAL_DECIMALS));
     } else {
-      // Execute Buy
+      // Execute Buy on-chain (prompts Rabby / EVM wallet popup)
       if (side === "YES") {
         buyYesHook.buy(amount.toString());
       } else {
@@ -537,30 +558,57 @@ function BetConfirmModalInner({ market, initialSide, onClose }: InnerProps) {
             <div
               style={{
                 textAlign: "center",
-                padding: "0.875rem",
+                padding: "1rem",
                 background: "rgba(22,163,74,0.08)",
-                border: "1px solid rgba(22,163,74,0.3)",
-                borderRadius: "12px",
+                border: "1.5px solid rgba(22,163,74,0.35)",
+                borderRadius: "14px",
                 color: "#16a34a",
                 fontWeight: 700,
-                fontSize: "0.9rem",
+                fontSize: "0.95rem",
                 animation: "fadeIn 0.2s ease",
                 display: "flex",
                 flexDirection: "column",
-                gap: "0.4rem",
+                gap: "0.5rem",
               }}
             >
-              <div>✓ Bet placed successfully!</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", fontSize: "1rem" }}>
+                <span>✓</span> Bet Placed Successfully!
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "#4b5563", fontWeight: 500 }}>
+                Position added to your <strong>My Bets</strong> portfolio.
+              </div>
               {placedTx && (
-                <div style={{ fontSize: "0.72rem", color: "#4b5563", fontFamily: "var(--font-mono)", wordBreak: "break-all", fontWeight: 500 }}>
-                  TX:{" "}
+                <div
+                  style={{
+                    marginTop: "0.25rem",
+                    padding: "0.5rem 0.75rem",
+                    background: "rgba(0,0,0,0.04)",
+                    borderRadius: "8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.3rem",
+                    alignItems: "center",
+                  }}
+                >
+                  <span style={{ fontSize: "0.68rem", color: "#6b7280", fontFamily: "var(--font-mono)" }}>
+                    TX Hash: {placedTx.slice(0, 10)}...{placedTx.slice(-8)}
+                  </span>
                   <a
                     href={`https://testnet.arcscan.app/tx/${placedTx}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: "var(--teal)", textDecoration: "underline" }}
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "var(--teal)",
+                      fontWeight: 700,
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                    }}
                   >
-                    {placedTx.slice(0, 10)}...{placedTx.slice(-8)}
+                    <span>View on ArcScan Explorer</span>
+                    <ExternalLink size={12} />
                   </a>
                 </div>
               )}

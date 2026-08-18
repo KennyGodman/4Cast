@@ -28,6 +28,7 @@ interface MarketCardProps {
   onConnectClick: () => void;
   onDetailClick: (market: MarketCardData) => void;
   onQuickBet: (market: MarketCardData, side: "YES" | "NO") => void;
+  onPlaceBet?: (marketId: string, side: "YES" | "NO", amount: number, txHash?: string) => Promise<string | undefined>;
 }
 
 export function MarketCard({
@@ -36,6 +37,7 @@ export function MarketCard({
   onConnectClick,
   onDetailClick,
   onQuickBet,
+  onPlaceBet,
 }: MarketCardProps) {
   const [pendingSide, setPendingSide] = useState<"YES" | "NO" | null>(null);
 
@@ -400,6 +402,7 @@ export function MarketCard({
           market={market}
           initialSide={pendingSide}
           onClose={() => setPendingSide(null)}
+          onPlaceBet={onPlaceBet}
         />
       )}
     </>

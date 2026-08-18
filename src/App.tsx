@@ -8,13 +8,16 @@ import { LandingPage } from "@/components/LandingPage";
 import { WalletConnectModal } from "@/components/WalletConnectModal";
 import { AlertModal } from "@/components/AlertModal";
 import { MarketDetailModal } from "@/components/MarketDetailModal";
+import { AppLoadingScreen } from "@/components/AppLoadingScreen";
 import { MARKETS, type MarketCardData, type DynamicMarket, dynamicToCardData } from "@/lib/markets";
 import { useWallet } from "@/contexts/WalletContext";
+import { getUserBets, saveUserBet, updateUserBet, generateTxHash, type UserBet } from "@/lib/bets";
 
 export default function App() {
   const { address } = useWallet();
 
   const [view, setView] = useState<"home" | "app">("home");
+  const [isLoadingApp, setIsLoadingApp] = useState(false);
   const [activeTab, setActiveTab] = useState("markets");
   const [dynamicMarkets, setDynamicMarkets] = useState<MarketCardData[]>(() => {
     if (typeof window !== "undefined") {
@@ -37,14 +40,8 @@ export default function App() {
     }
   }, []);
 
-  // Local user bets database
-  const [userBets, setUserBets] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("4cast_user_bets");
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  // Local user bets database with auto-migration and live reactivity
+  const [userBets, setUserBets] = useState<UserBet[]>(getUserBets);
 
   // Modal Overlays
   const [showWalletModal, setShowWalletModal] = useState(false);
@@ -56,10 +53,19 @@ export default function App() {
     localStorage.setItem("4cast_dark_mode", String(darkMode));
   }, [darkMode]);
 
-  // Sync bets to localStorage
+  // Reactive listener for bets updates across modals/tabs
   useEffect(() => {
-    localStorage.setItem("4cast_user_bets", JSON.stringify(userBets));
-  }, [userBets]);
+    const handleBetsUpdated = () => {
+      setUserBets(getUserBets());
+    };
+
+    window.addEventListener("4cast_bets_updated", handleBetsUpdated);
+    window.addEventListener("storage", handleBetsUpdated);
+    return () => {
+      window.removeEventListener("4cast_bets_updated", handleBetsUpdated);
+      window.removeEventListener("storage", handleBetsUpdated);
+    };
+  }, []);
 
   // Sync dynamic markets to localStorage
   useEffect(() => {
@@ -91,14 +97,14 @@ export default function App() {
   // Combine static mock markets & dynamic on-chain markets
   const allMarkets = [...dynamicMarkets, ...MARKETS];
 
-  const handlePlaceBetLocal = async (marketId: string, side: "YES" | "NO", amount: number) => {
+  const handlePlaceBetLocal = async (marketId: string, side: "YES" | "NO", amount: number, customTxHash?: string) => {
     const market = allMarkets.find((m) => m.id === marketId);
     if (!market) return;
 
     const betId = `bet-${Date.now()}`;
-    const txHash = `0x${Math.random().toString(16).substr(2, 40)}`;
+    const txHash = customTxHash || generateTxHash();
 
-    const newBet = {
+    const newBet: UserBet = {
       id: betId,
       txHash,
       marketId,
@@ -110,17 +116,19 @@ export default function App() {
       claimed: false,
     };
 
-    setUserBets((prev) => [newBet, ...prev]);
+    saveUserBet(newBet);
+    setUserBets((prev) => [newBet, ...prev.filter((b) => b.id !== betId)]);
     return txHash;
   };
 
   const handleClaimPayoutLocal = async (betId: string, _marketAddress: string) => {
+    updateUserBet(betId, { claimed: true, status: "settled" });
     setUserBets((prev) =>
       prev.map((b) => (b.id === betId ? { ...b, claimed: true, status: "settled" } : b))
     );
     setCustomAlert({
       title: "Winnings Claimed",
-      message: "The payout contract position has been settled and collateral transferred back to your wallet.",
+      message: "The payout position has been settled and funds recorded to your wallet.",
     });
   };
 
@@ -135,15 +143,20 @@ export default function App() {
     });
   };
 
+  const handleLaunchApp = (targetMarket?: MarketCardData) => {
+    setIsLoadingApp(true);
+    if (targetMarket) {
+      setSelectedMarket(targetMarket);
+    }
+    setView("app");
+  };
+
   if (view === "home") {
     return (
       <>
         <LandingPage
-          onLaunchApp={() => setView("app")}
-          onSelectMarket={(m) => {
-            setSelectedMarket(m);
-            setView("app");
-          }}
+          onLaunchApp={() => handleLaunchApp()}
+          onSelectMarket={(m) => handleLaunchApp(m)}
           darkMode={darkMode}
           onToggleDarkMode={() => setDarkMode((prev) => !prev)}
           markets={allMarkets}
@@ -192,6 +205,14 @@ export default function App() {
         transition: "background 0.3s ease, color 0.3s ease",
       }}
     >
+      {/* Loading Overlay Screen */}
+      {isLoadingApp && (
+        <AppLoadingScreen
+          onComplete={() => setIsLoadingApp(false)}
+          duration={1500}
+        />
+      )}
+
       {/* Header component */}
       <Header
         activeTab={activeTab}
@@ -216,6 +237,7 @@ export default function App() {
               onQuickBet={(market, _side) => {
                 setSelectedMarket(market);
               }}
+              onPlaceBet={handlePlaceBetLocal}
               externalSearch={headerSearch}
             />
           )}
