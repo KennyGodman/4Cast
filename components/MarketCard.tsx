@@ -107,18 +107,16 @@ export function MarketCard({
     <>
       <div
         id={`market-card-${market.id}`}
-        className={`market-card ${!isReal ? "demo-card" : ""}`}
-        onClick={() => {
-          if (isReal) onDetailClick(market);
-        }}
+        className="market-card"
+        onClick={() => onDetailClick(market)}
         style={{
-          cursor: isReal ? "pointer" : "default",
-          opacity: !isReal ? 0.75 : 1,
+          cursor: "pointer",
+          opacity: 1,
         }}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && isReal) onDetailClick(market);
+          if (e.key === "Enter") onDetailClick(market);
         }}
       >
         {/* Header: thumbnail + title + % */}
@@ -168,6 +166,24 @@ export function MarketCard({
                 flexWrap: "wrap",
               }}
             >
+              {market.category === "Arc Network" && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.2rem",
+                    fontSize: "0.62rem",
+                    fontWeight: 700,
+                    padding: "0.15rem 0.55rem",
+                    borderRadius: "var(--r-pill)",
+                    background: "rgba(30, 104, 201, 0.15)",
+                    color: "var(--teal)",
+                    border: "1px solid rgba(30, 104, 201, 0.35)",
+                  }}
+                >
+                  ⚡ Arc Mainnet
+                </span>
+              )}
               {isResolving && (
                 <span
                   style={{
@@ -202,7 +218,7 @@ export function MarketCard({
                   {settlementOutcome ? `✓ Resolved ${settlementOutcome}` : "Resolved"}
                 </span>
               )}
-              {isReal && !isSettled && (
+              {hasAmmPrice && !isSettled && (
                 <span
                   style={{
                     display: "inline-flex",
@@ -218,21 +234,6 @@ export function MarketCard({
                   }}
                 >
                   ⛓️ On-Chain
-                </span>
-              )}
-              {!isReal && (
-                <span
-                  style={{
-                    fontSize: "0.62rem",
-                    fontWeight: 600,
-                    padding: "0.15rem 0.5rem",
-                    borderRadius: "var(--r-pill)",
-                    background: "var(--bg-3)",
-                    color: "var(--text-2)",
-                    border: "1px solid var(--border-0)",
-                  }}
-                >
-                  Demo Card
                 </span>
               )}
             </div>
@@ -257,16 +258,16 @@ export function MarketCard({
         </div>
 
         {/* YES/NO buttons or Resolved state */}
-        {isOpen && isReal && !isSettled ? (
+        {isOpen && !isSettled ? (
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button
               id={`bet-yes-${market.id}`}
               className="yes-btn"
               onClick={(e) => handleBet(e, "YES")}
               style={{
-                background: "rgba(22, 163, 74, 0.1)",
+                background: "rgba(22, 163, 74, 0.12)",
                 color: "var(--yes-green)",
-                border: "1px solid rgba(22, 163, 74, 0.2)",
+                border: "1px solid rgba(22, 163, 74, 0.3)",
                 borderRadius: "var(--r-md)",
                 padding: "0.45rem",
                 fontWeight: 700,
@@ -283,9 +284,9 @@ export function MarketCard({
               className="no-btn"
               onClick={(e) => handleBet(e, "NO")}
               style={{
-                background: "rgba(220, 38, 38, 0.1)",
+                background: "rgba(220, 38, 38, 0.12)",
                 color: "var(--no-red)",
-                border: "1px solid rgba(220, 38, 38, 0.2)",
+                border: "1px solid rgba(220, 38, 38, 0.3)",
                 borderRadius: "var(--r-md)",
                 padding: "0.45rem",
                 fontWeight: 700,
@@ -313,45 +314,7 @@ export function MarketCard({
           >
             ✓ Resolved {settlementOutcome} · UMA Oracle
           </div>
-        ) : (
-          // Demo markets resolution or buttons
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button
-              className="yes-btn"
-              disabled
-              style={{
-                background: "var(--bg-2)",
-                color: "var(--text-3)",
-                border: "1px solid var(--border-0)",
-                borderRadius: "var(--r-md)",
-                padding: "0.45rem",
-                fontWeight: 700,
-                fontSize: "0.85rem",
-                flex: 1,
-                cursor: "not-allowed",
-              }}
-            >
-              Yes
-            </button>
-            <button
-              className="no-btn"
-              disabled
-              style={{
-                background: "var(--bg-2)",
-                color: "var(--text-3)",
-                border: "1px solid var(--border-0)",
-                borderRadius: "var(--r-md)",
-                padding: "0.45rem",
-                fontWeight: 700,
-                fontSize: "0.85rem",
-                flex: 1,
-                cursor: "not-allowed",
-              }}
-            >
-              No
-            </button>
-          </div>
-        )}
+        ) : null}
 
         {/* Footer: creator · time · liquidity · share */}
         <div

@@ -17,7 +17,7 @@ const STATUS_FILTERS = [
   { value: "resolved", label: "Resolved" },
 ];
 
-const CATEGORIES = ["Crypto", "Economy", "Equities", "Commodities", "Geopolitics"];
+const CATEGORIES = ["Arc Network", "Crypto", "Economy", "Equities", "Commodities", "Geopolitics"];
 
 interface MarketsPageProps {
   markets: MarketCardData[];
