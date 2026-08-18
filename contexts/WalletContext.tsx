@@ -207,11 +207,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       // Directly request accounts — this triggers the wallet popup
       await eth.request({ method: "eth_requestAccounts" });
 
-      // Ensure wallet is switched to Arc Testnet (Chain ID 5042002 -> 0x4cef12)
+      // Ensure wallet is switched to Arc Testnet (Chain ID 5042002 -> 0x4cef52)
       try {
         await eth.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x4cef12" }],
+          params: [{ chainId: "0x4cef52" }],
         });
       } catch (switchError: any) {
         // If chain is not yet added in wallet, add Arc Testnet
@@ -225,7 +225,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               method: "wallet_addEthereumChain",
               params: [
                 {
-                  chainId: "0x4cef12",
+                  chainId: "0x4cef52",
                   chainName: "Arc Testnet",
                   nativeCurrency: {
                     name: "USDC",
