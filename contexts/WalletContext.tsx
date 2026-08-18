@@ -98,17 +98,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [bundlerClient, setBundlerClient] = useState<CircleBundlerClient | null>(null);
   const [circleConnecting, setCircleConnecting] = useState(false);
   const [circleError, setCircleError] = useState<string | null>(null);
+  const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const restoringRef = useRef(false);
 
   // Determine active wallet
-  const walletType: WalletType = wagmiConnected
-    ? "metamask"
-    : circleAddress
-      ? "circle"
-      : null;
+  const walletType: WalletType = isManuallyDisconnected
+    ? null
+    : wagmiConnected
+      ? "metamask"
+      : circleAddress
+        ? "circle"
+        : null;
 
-  const address = walletType === "metamask" ? wagmiAddress : circleAddress;
-  const isConnected = walletType !== null;
+  const address = walletType === "metamask" ? wagmiAddress : walletType === "circle" ? circleAddress : undefined;
+  const isConnected = walletType !== null && !!address;
 
   const initCircleAccount = useCallback(
     async (credential: Awaited<ReturnType<typeof toWebAuthnCredential>>) => {
@@ -136,6 +139,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 
   const connectCircle = useCallback(async () => {
+    setIsManuallyDisconnected(false);
     setCircleConnecting(true);
     setCircleError(null);
     try {
@@ -145,7 +149,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         );
       }
       // Disconnect MetaMask if connected
-      if (wagmiConnected) wagmiDisconnect();
+      if (wagmiConnected) {
+        try {
+          wagmiDisconnect();
+        } catch {}
+      }
 
       let credential: Awaited<ReturnType<typeof toWebAuthnCredential>>;
 
@@ -179,6 +187,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [wagmiConnected, wagmiDisconnect, initCircleAccount]);
 
   const connectMetaMask = useCallback(async () => {
+    setIsManuallyDisconnected(false);
     // Clear Circle state if active
     if (circleAddress) {
       setCircleAddress(undefined);
@@ -250,33 +259,49 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [circleAddress, wagmiConnectAsync, connectors]);
 
   const disconnect = useCallback(() => {
+    setIsManuallyDisconnected(true);
+    setCircleAddress(undefined);
+    setBundlerClient(null);
+    setCircleError(null);
+
     try {
       if (typeof wagmiDisconnect === "function") {
         wagmiDisconnect();
       }
+      if (connectors && Array.isArray(connectors)) {
+        connectors.forEach((c) => {
+          try {
+            wagmiDisconnect({ connector: c });
+          } catch {}
+        });
+      }
     } catch (err) {
       console.warn("Wagmi disconnect error:", err);
     }
-    setCircleAddress(undefined);
-    setBundlerClient(null);
-    setCircleError(null);
+
     if (typeof window !== "undefined") {
       try {
         localStorage.removeItem(STORAGE_KEY);
         // Clear wagmi cache in localStorage so it doesn't auto-reconnect on refresh
         Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith("wagmi") || key.includes("recentConnector")) {
+          if (key.startsWith("wagmi") || key.includes("recentConnector") || key.includes("wc@")) {
             localStorage.removeItem(key);
+          }
+        });
+        Object.keys(sessionStorage || {}).forEach((key) => {
+          if (key.startsWith("wagmi") || key.includes("recentConnector")) {
+            sessionStorage.removeItem(key);
           }
         });
       } catch (e) {
         console.warn("Error clearing localStorage:", e);
       }
     }
-  }, [wagmiDisconnect]);
+  }, [wagmiDisconnect, connectors]);
 
   // Restore Circle session from localStorage on mount
   useEffect(() => {
+    if (isManuallyDisconnected) return;
     if (restoringRef.current) return;
     if (!isCircleConfigured()) return;
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -302,7 +327,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         restoringRef.current = false;
       }
     })();
-  }, [wagmiConnected, initCircleAccount]);
+  }, [wagmiConnected, initCircleAccount, isManuallyDisconnected]);
 
   return (
     <WalletContext.Provider
