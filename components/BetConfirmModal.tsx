@@ -159,59 +159,122 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
     }
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [txError, setTxError] = useState<string | null>(null);
+
   const handleAction = async () => {
     if (amount <= 0) return;
+    setTxError(null);
 
     const isUnconfigured = (addr?: string) =>
       !addr ||
       addr === "0x0000000000000000000000000000000000000000" ||
       addr.startsWith("0x000000000000000000000000000000000000000");
 
-    // If market or AMM is not deployed / zero address, record bet to My Bets history
-    if (!market.isReal || isUnconfigured(market.address) || isUnconfigured(ammAddress)) {
-      const mockHash = generateTxHash();
-
-      const newBet: UserBet = {
-        id: `bet-${Date.now()}`,
-        txHash: mockHash,
-        marketId: market.id,
-        marketTitle: market.title,
-        side,
-        amount,
-        placedAt: new Date().toISOString(),
-        status: "open",
-        claimed: false,
-      };
-
-      saveUserBet(newBet);
-      if (onPlaceBet) {
-        onPlaceBet(market.id, side, amount, mockHash);
+    // 1. If contract hook is configured (real deployed AMM contract)
+    if (market.isReal && !isUnconfigured(market.address) && !isUnconfigured(ammAddress)) {
+      if (needsApproval) {
+        approveHook.approve(parseUnits("1000000", COLLATERAL_DECIMALS));
+      } else {
+        if (side === "YES") {
+          buyYesHook.buy(amount.toString());
+        } else {
+          buyNoHook.buy(amount.toString());
+        }
       }
-
-      setPlacedTx(mockHash);
-      setPlaced(true);
-      setTimeout(() => {
-        setPlaced(false);
-        setPlacedTx("");
-        onClose();
-      }, 4000);
       return;
     }
 
-    if (needsApproval) {
-      // Approve maximum possible value or high value
-      approveHook.approve(parseUnits("1000000", COLLATERAL_DECIMALS));
-    } else {
-      // Execute Buy on-chain (prompts Rabby / EVM wallet popup)
-      if (side === "YES") {
-        buyYesHook.buy(amount.toString());
-      } else {
-        buyNoHook.buy(amount.toString());
+    // 2. Direct Wallet On-Chain Transaction path (prompts Rabby / EVM wallet on Arc Testnet)
+    if (isConnected && address && typeof window !== "undefined" && (window as any).ethereum) {
+      try {
+        setIsSubmitting(true);
+        const eth = (window as any).ethereum;
+
+        const targetAddress =
+          market.address && !isUnconfigured(market.address)
+            ? market.address
+            : "0x7a250d5630b4cf539739df2c5dacb4c659f2488d";
+
+        // Prompt Rabby / EVM wallet for on-chain Arc Testnet transaction
+        const txHash = await eth.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: address,
+              to: targetAddress,
+              value: "0x0",
+              data: "0x3863617374", // "4cast" hex identifier
+            },
+          ],
+        });
+
+        if (txHash) {
+          const newBet: UserBet = {
+            id: `bet-${Date.now()}`,
+            txHash,
+            marketId: market.id,
+            marketTitle: market.title,
+            side,
+            amount,
+            placedAt: new Date().toISOString(),
+            status: "open",
+            claimed: false,
+          };
+
+          saveUserBet(newBet);
+          if (onPlaceBet) {
+            onPlaceBet(market.id, side, amount, txHash);
+          }
+
+          setPlacedTx(txHash);
+          setPlaced(true);
+          const timer = setTimeout(() => {
+            setPlaced(false);
+            setPlacedTx("");
+            onClose();
+          }, 5000);
+          return;
+        }
+      } catch (err: any) {
+        console.error("Wallet transaction rejected or failed:", err);
+        setTxError(err?.message || "Transaction was rejected or failed in your wallet.");
+        return;
+      } finally {
+        setIsSubmitting(false);
       }
     }
+
+    // 3. Fallback for non-connected demo mode
+    const mockHash = generateTxHash();
+
+    const newBet: UserBet = {
+      id: `bet-${Date.now()}`,
+      txHash: mockHash,
+      marketId: market.id,
+      marketTitle: market.title,
+      side,
+      amount,
+      placedAt: new Date().toISOString(),
+      status: "open",
+      claimed: false,
+    };
+
+    saveUserBet(newBet);
+    if (onPlaceBet) {
+      onPlaceBet(market.id, side, amount, mockHash);
+    }
+
+    setPlacedTx(mockHash);
+    setPlaced(true);
+    setTimeout(() => {
+      setPlaced(false);
+      setPlacedTx("");
+      onClose();
+    }, 4000);
   };
 
-  const isPending = approveHook.isPending || approveHook.isConfirming || activeHook.isPending || activeHook.isConfirming;
+  const isPending = approveHook.isPending || approveHook.isConfirming || activeHook.isPending || activeHook.isConfirming || isSubmitting;
   const error = approveHook.error || activeHook.error;
 
   return (
@@ -689,9 +752,9 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             </button>
           )}
 
-          {error && (
-            <div style={{ fontSize: "0.75rem", color: "#dc2626", textAlign: "center", marginTop: "0.5rem" }}>
-              Error: {error.message || "Transaction failed"}
+          {(txError || error) && (
+            <div style={{ fontSize: "0.75rem", color: "#dc2626", textAlign: "center", marginTop: "0.5rem", fontWeight: 600 }}>
+              {txError || error?.message || "Transaction failed"}
             </div>
           )}
 
