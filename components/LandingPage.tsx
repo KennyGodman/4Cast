@@ -543,11 +543,11 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* ── Predict Opinions / Newsletter Banner Section (PredGen Style) ─────────────────────────── */}
+      {/* ── Predict Opinions / Newsletter Banner Section (PredGen Style with 4Cast Design System) ─────────────────────────── */}
       <section
         id="features"
         style={{
-          background: "#0c1538",
+          background: "var(--bg-0)",
           padding: "5rem 1.5rem",
           display: "flex",
           flexDirection: "column",
@@ -555,6 +555,7 @@ export function LandingPage({
           textAlign: "center",
           borderTop: "1px solid var(--border-0)",
           borderBottom: "1px solid var(--border-0)",
+          transition: "background 0.3s ease",
         }}
       >
         {/* Center glowing crystal ball icon badge */}
@@ -563,13 +564,13 @@ export function LandingPage({
             width: 52,
             height: 52,
             borderRadius: "50%",
-            background: "rgba(99, 102, 241, 0.25)",
-            border: "1px solid rgba(99, 102, 241, 0.4)",
+            background: "var(--teal-light)",
+            border: "1px solid var(--border-teal)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "1.4rem",
-            boxShadow: "0 0 20px rgba(99, 102, 241, 0.3)",
+            boxShadow: "0 0 24px rgba(30, 104, 201, 0.25)",
           }}
         >
           🔮
@@ -580,7 +581,7 @@ export function LandingPage({
           style={{
             fontSize: "2.5rem",
             fontWeight: 800,
-            color: "#ffffff",
+            color: "var(--text-0)",
             letterSpacing: "-0.025em",
             marginTop: "1.5rem",
             marginBottom: "1.5rem",
@@ -603,11 +604,11 @@ export function LandingPage({
           <a
             href="#how-it-works"
             style={{
-              background: "rgba(255, 255, 255, 0.08)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              borderRadius: "9999px",
+              background: "var(--bg-1)",
+              border: "1.5px solid var(--border-1)",
+              borderRadius: "var(--r-pill)",
               padding: "0.65rem 1.35rem",
-              color: "#ffffff",
+              color: "var(--text-0)",
               fontSize: "0.9rem",
               fontWeight: 600,
               textDecoration: "none",
@@ -617,26 +618,26 @@ export function LandingPage({
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.35)";
+              e.currentTarget.style.background = "var(--bg-2)";
+              e.currentTarget.style.borderColor = "var(--teal)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.background = "var(--bg-1)";
+              e.currentTarget.style.borderColor = "var(--border-1)";
             }}
           >
-            <span style={{ color: "#f87171" }}>❓</span>
+            <span>❓</span>
             <span>How does this work?</span>
           </a>
 
           <a
             href="#faq"
             style={{
-              background: "rgba(255, 255, 255, 0.08)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              borderRadius: "9999px",
+              background: "var(--bg-1)",
+              border: "1.5px solid var(--border-1)",
+              borderRadius: "var(--r-pill)",
               padding: "0.65rem 1.35rem",
-              color: "#ffffff",
+              color: "var(--text-0)",
               fontSize: "0.9rem",
               fontWeight: 600,
               textDecoration: "none",
@@ -646,15 +647,15 @@ export function LandingPage({
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.35)";
+              e.currentTarget.style.background = "var(--bg-2)";
+              e.currentTarget.style.borderColor = "var(--teal)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.background = "var(--bg-1)";
+              e.currentTarget.style.borderColor = "var(--border-1)";
             }}
           >
-            <span style={{ color: "#60a5fa" }}>💬</span>
+            <span>💬</span>
             <span>Submit Feedback</span>
           </a>
         </div>
@@ -664,18 +665,18 @@ export function LandingPage({
           style={{
             maxWidth: "500px",
             width: "100%",
-            background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
-            borderRadius: "20px",
+            background: "var(--bg-1)",
+            border: "1.5px solid var(--border-1)",
+            borderRadius: "var(--r-xl)",
             padding: "2rem",
             textAlign: "left",
-            backdropFilter: "blur(10px)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
           }}
         >
-          <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#ffffff", marginBottom: "0.4rem" }}>
+          <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-0)", marginBottom: "0.4rem" }}>
             Join the 4Cast Newsletter
           </h3>
-          <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.65)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-2)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
             Get weekly updates on the highest volume AI-resolved prediction markets.
           </p>
 
@@ -689,10 +690,11 @@ export function LandingPage({
             style={{
               display: "flex",
               alignItems: "center",
-              background: "rgba(255, 255, 255, 0.08)",
-              border: "1px solid rgba(255, 255, 255, 0.18)",
-              borderRadius: "9999px",
+              background: "var(--bg-2)",
+              border: "1.5px solid var(--border-1)",
+              borderRadius: "var(--r-pill)",
               padding: "4px 4px 4px 16px",
+              transition: "border-color 0.2s ease",
             }}
           >
             <input
@@ -705,7 +707,7 @@ export function LandingPage({
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                color: "#ffffff",
+                color: "var(--text-0)",
                 fontSize: "0.9rem",
                 width: "100%",
               }}
@@ -714,16 +716,17 @@ export function LandingPage({
               type="submit"
               disabled={subscribed}
               style={{
-                background: "#ffffff",
-                color: "#0c1538",
+                background: "var(--teal)",
+                color: "#ffffff",
                 border: "none",
-                borderRadius: "9999px",
-                padding: "0.6rem 1.4rem",
+                borderRadius: "var(--r-pill)",
+                padding: "0.65rem 1.4rem",
                 fontWeight: 700,
                 fontSize: "0.875rem",
                 cursor: "pointer",
                 flexShrink: 0,
-                transition: "opacity 0.2s ease",
+                boxShadow: "0 4px 12px rgba(30,104,201,0.3)",
+                transition: "all 0.2s ease",
               }}
             >
               {subscribed ? "Subscribed!" : "Subscribe"}
