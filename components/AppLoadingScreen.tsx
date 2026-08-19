@@ -14,7 +14,7 @@ export function AppLoadingScreen({ onComplete, duration = 1500 }: AppLoadingScre
   const statusMessages = [
     "Connecting to Arc Network...",
     "Loading Prediction Markets...",
-    "Syncing UMA Optimistic Oracle...",
+    "Syncing Optimistic Oracle...",
     "Preparing workspace...",
   ];
 

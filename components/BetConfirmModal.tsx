@@ -771,7 +771,7 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
               lineHeight: 1.5,
             }}
           >
-            Resolved via UMA's Optimistic Oracle V2 on Arc Testnet.
+            Resolved via Optimistic Oracle V2 on Arc Testnet.
           </p>
         </div>
       </div>

@@ -312,7 +312,7 @@ export function MarketCard({
               color: settlementOutcome === "YES" ? "var(--yes-green)" : "var(--no-red)",
             }}
           >
-            ✓ Resolved {settlementOutcome} · UMA Oracle
+            ✓ Resolved {settlementOutcome}
           </div>
         ) : null}
 

@@ -105,7 +105,7 @@ export function CreateMarket({ onCreateMarket }: CreateMarketProps) {
 
   const stepsList = [
     "Deploying Event-Based Prediction Market contract to Arc Testnet...",
-    "Approving proposer rewards and requesting resolution price from UMA Oracle...",
+    "Approving proposer rewards and requesting resolution price from Optimistic Oracle...",
     "Deploying Prediction Market AMM Liquidity Pool contract...",
     "Funding AMM and seeding pool with 1,000 USDC initial liquidity...",
     "Market deployed successfully! Finalizing details...",

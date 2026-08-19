@@ -438,7 +438,7 @@ function MarketDetailModalInner({
               </div>
               <p style={{ fontSize: "0.85rem", color: "var(--text-1)", lineHeight: 1.6 }}>
                 {market.isReal
-                  ? `This market resolves to YES if the statement is true and NO otherwise. Dispute or resolution is adjudicated trustlessly via UMA's Optimistic Oracle on Arc Testnet.`
+                  ? `This market resolves to YES if the statement is true and NO otherwise. Dispute or resolution is adjudicated trustlessly via Optimistic Oracle on Arc Testnet.`
                   : `Mock prediction market for category ${market.category}. Standard resolution rules apply.`}
               </p>
             </div>
@@ -684,14 +684,14 @@ contract EventBasedPredictionMarket {
         // ... deploys expander YES/NO tokens ...
     }
 
-    // Requests price from UMA OO
+    // Requests price from OO
     function initializeMarket() external {
         require(!priceRequested);
         priceRequested = true;
         // ... calls optimisticOracle.requestPrice() ...
     }
 
-    // Called back by UMA Oracle at settlement
+    // Called back by Oracle at settlement
     function priceSettled(
         bytes32 identifier,
         uint256 timestamp,
@@ -858,7 +858,7 @@ contract EventBasedPredictionMarket {
                 </div>
               ) : (
                 <>
-                  {/* UMA Oracle Resolution Section */}
+                  {/* Oracle Resolution Section */}
                   {isReal && (
                     <div
                       style={{
@@ -882,7 +882,7 @@ contract EventBasedPredictionMarket {
                           gap: "0.35rem",
                         }}
                       >
-                        <span>🔮</span> UMA Oracle Resolution Console
+                        <span>🔮</span> Oracle Resolution Console
                       </div>
 
                       {/* Oracle States */}
@@ -1290,7 +1290,7 @@ contract EventBasedPredictionMarket {
                       lineHeight: 1.5,
                     }}
                   >
-                    Resolved via UMA Optimistic Oracle V2. Results are decentralized and final.
+                    Resolved via Optimistic Oracle V2. Results are decentralized and final.
                   </p>
                 </>
               )}

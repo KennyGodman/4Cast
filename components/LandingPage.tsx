@@ -47,7 +47,7 @@ export function LandingPage({
     },
     {
       q: "How are markets resolved?",
-      a: "Market resolution is secured by UMA's Optimistic Oracle V2. Anyone can propose an outcome with a bond, and if undisputed during the liveness period, the market settles trustlessly on-chain.",
+      a: "Market resolution is secured by Optimistic Oracle resolution. Anyone can propose an outcome with a bond, and if undisputed during the liveness period, the market settles trustlessly on-chain.",
     },
     {
       q: "Do I need a Web3 wallet like MetaMask?",
@@ -298,7 +298,7 @@ export function LandingPage({
               maxWidth: "540px",
             }}
           >
-            Trade opinions on crypto, politics, finance, and macro events. Built with UMA Optimistic Oracle resolution and Circle biometric passkey wallets on Arc Network.
+            Trade opinions on crypto, politics, finance, and macro events. Built with Circle biometric passkey wallets on Arc Network.
           </p>
 
           {/* CTA Buttons */}
@@ -376,10 +376,6 @@ export function LandingPage({
               color: "var(--text-2)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <ShieldCheck size={16} color="var(--yes-green)" />
-              <span>UMA Oracle V2</span>
-            </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
               <Zap size={16} color="var(--teal)" />
               <span>Passkey Sign-in</span>
@@ -522,26 +518,14 @@ export function LandingPage({
       >
         <div
           style={{
-            maxWidth: "1280px",
+            maxWidth: "640px",
             margin: "0 auto",
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: "repeat(2, 1fr)",
             gap: "2rem",
             textAlign: "center",
           }}
         >
-          <div>
-            <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "var(--teal)" }}>$1.4M+</div>
-            <div style={{ fontSize: "0.85rem", color: "var(--text-2)", marginTop: "0.25rem", fontWeight: 500 }}>
-              Total Volume Traded
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "var(--yes-green)" }}>100%</div>
-            <div style={{ fontSize: "0.85rem", color: "var(--text-2)", marginTop: "0.25rem", fontWeight: 500 }}>
-              UMA Oracle Dispute Accuracy
-            </div>
-          </div>
           <div>
             <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "var(--teal)" }}>&lt; 1s</div>
             <div style={{ fontSize: "0.85rem", color: "var(--text-2)", marginTop: "0.25rem", fontWeight: 500 }}>
@@ -594,10 +578,10 @@ export function LandingPage({
               <ShieldCheck size={24} color="var(--teal)" />
             </div>
             <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-              UMA Optimistic Oracle
+              Optimistic Oracle
             </h3>
             <p style={{ fontSize: "0.9rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-              Decentralized resolution backed by economic bond guarantees and dispute escalation to UMA DVM arbitration.
+              Decentralized resolution backed by economic bond guarantees and dispute escalation.
             </p>
           </div>
 
@@ -762,7 +746,7 @@ export function LandingPage({
                 Settle & Claim Payout
               </h3>
               <p style={{ fontSize: "0.875rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-                Once resolved by UMA Oracle, redeem winning shares 1-to-1 for USDC collateral.
+                Once resolved by Optimistic Oracle, redeem winning shares 1-to-1 for USDC collateral.
               </p>
             </div>
           </div>
@@ -972,7 +956,7 @@ export function LandingPage({
         }}
       >
         <div style={{ fontSize: "0.85rem", color: "var(--text-2)", fontWeight: 600, marginBottom: "0.5rem" }}>
-          4Cast Prediction Markets — Powered by Circle Passkeys & UMA Optimistic Oracle on Arc Network
+          4Cast Prediction Markets — Powered by Circle Passkeys on Arc Network
         </div>
         <div style={{ fontSize: "0.75rem", color: "var(--text-3)" }}>
           © 2026 4Cast. All rights reserved.
