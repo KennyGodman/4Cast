@@ -277,7 +277,7 @@ export function LandingPage({
               marginBottom: "1.25rem",
             }}
           >
-            Predict tomorrow&apos;s outcomes. <br />
+            4Cast on Arc. <br />
             <span
               style={{
                 background: "linear-gradient(135deg, var(--teal) 0%, #38bdf8 100%)",
@@ -285,7 +285,7 @@ export function LandingPage({
                 WebkitTextFillColor: "transparent",
               }}
             >
-              Trade with confidence.
+              Predict opinions that matters
             </span>
           </h1>
 
