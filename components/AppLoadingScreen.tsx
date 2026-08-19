@@ -220,7 +220,7 @@ export function AppLoadingScreen({ onComplete, duration = 1500 }: AppLoadingScre
               boxShadow: "0 0 8px var(--teal)",
             }}
           />
-          <span>Arc Testnet • Chain ID 50</span>
+          <span>Arc Testnet</span>
         </div>
       </div>
 
