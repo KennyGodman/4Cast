@@ -157,13 +157,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
       let credential: Awaited<ReturnType<typeof toWebAuthnCredential>>;
 
-      // Try login first (existing passkey), fall back to register
-      try {
-        credential = await toWebAuthnCredential({
-          transport: getPasskeyTransport(),
-          mode: WebAuthnMode.Login,
-        });
-      } catch {
+      const hasStoredCredential = typeof window !== "undefined" && !!localStorage.getItem(STORAGE_KEY);
+
+      if (hasStoredCredential) {
+        try {
+          credential = await toWebAuthnCredential({
+            transport: getPasskeyTransport(),
+            mode: WebAuthnMode.Login,
+          });
+        } catch (loginErr) {
+          console.warn("Passkey login failed, falling back to passkey registration:", loginErr);
+          const username = `user_${crypto.randomUUID().slice(0, 8)}`;
+          credential = await toWebAuthnCredential({
+            transport: getPasskeyTransport(),
+            mode: WebAuthnMode.Register,
+            username,
+          });
+        }
+      } else {
         const username = `user_${crypto.randomUUID().slice(0, 8)}`;
         credential = await toWebAuthnCredential({
           transport: getPasskeyTransport(),

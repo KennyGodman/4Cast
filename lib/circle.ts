@@ -34,11 +34,18 @@ const PLACEHOLDER_VALUES = [
   "",
 ];
 
-const envKey = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY;
-const envUrl = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_URL;
+const envKey = (process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY || "").trim();
+const envUrl = (process.env.NEXT_PUBLIC_CIRCLE_CLIENT_URL || "").trim();
 
-const clientKey = envKey && !PLACEHOLDER_VALUES.includes(envKey) ? envKey : DEFAULT_CLIENT_KEY;
-const clientUrl = envUrl && !PLACEHOLDER_VALUES.includes(envUrl) ? envUrl : DEFAULT_CLIENT_URL;
+const clientKey =
+  envKey && !PLACEHOLDER_VALUES.includes(envKey) && envKey.startsWith("TEST_CLIENT_KEY:")
+    ? envKey
+    : DEFAULT_CLIENT_KEY;
+
+const clientUrl =
+  envUrl && !PLACEHOLDER_VALUES.includes(envUrl) && envUrl.startsWith("http")
+    ? envUrl
+    : DEFAULT_CLIENT_URL;
 
 export function isCircleConfigured(): boolean {
   return !!clientKey && !!clientUrl && !PLACEHOLDER_VALUES.includes(clientKey);
