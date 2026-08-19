@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
   ShieldCheck,
@@ -247,8 +248,15 @@ export function LandingPage({
         }}
       >
         {/* Left Hero Text */}
-        <div>
-          <div
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -266,7 +274,7 @@ export function LandingPage({
           >
             <Sparkles size={14} />
             <span>Next-Gen Prediction Market on Arc Network</span>
-          </div>
+          </motion.div>
 
           <h1
             style={{
@@ -305,7 +313,9 @@ export function LandingPage({
 
           {/* CTA Buttons */}
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.97 }}
               onClick={onLaunchApp}
               style={{
                 background: "var(--teal)",
@@ -320,22 +330,15 @@ export function LandingPage({
                 alignItems: "center",
                 gap: "0.6rem",
                 boxShadow: "0 6px 20px rgba(30,104,201,0.35)",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(30,104,201,0.45)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "none";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(30,104,201,0.35)";
               }}
             >
               <span>Explore DApp</span>
               <ArrowRight size={18} />
-            </button>
+            </motion.button>
 
-            <a
+            <motion.a
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.97 }}
               href="#markets-preview"
               style={{
                 background: "var(--bg-1)",
@@ -349,20 +352,11 @@ export function LandingPage({
                 display: "flex",
                 alignItems: "center",
                 gap: "0.5rem",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--teal)";
-                e.currentTarget.style.background = "var(--bg-2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-1)";
-                e.currentTarget.style.background = "var(--bg-1)";
               }}
             >
               <TrendingUp size={18} />
               <span>Live Markets</span>
-            </a>
+            </motion.a>
           </div>
 
           {/* Security highlights */}
@@ -387,10 +381,19 @@ export function LandingPage({
               <span>Arc Testnet USDC</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right Hero Market Preview Card */}
-        <div style={{ position: "relative" }}>
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
+          transition={{
+            opacity: { duration: 0.8, delay: 0.2 },
+            x: { duration: 0.8, delay: 0.2 },
+            y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+          }}
+          style={{ position: "relative" }}
+        >
           {/* Glass Card Stack */}
           <div
             style={{
@@ -506,11 +509,15 @@ export function LandingPage({
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ── Key Platform Stats Strip ───────────────────────────── */}
-      <section
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.6 }}
         style={{
           background: "var(--bg-1)",
           borderTop: "1px solid var(--border-0)",
@@ -528,20 +535,20 @@ export function LandingPage({
             textAlign: "center",
           }}
         >
-          <div>
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
             <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "var(--teal)" }}>&lt; 1s</div>
             <div style={{ fontSize: "0.85rem", color: "var(--text-2)", marginTop: "0.25rem", fontWeight: 500 }}>
               Arc Sub-Second Finality
             </div>
-          </div>
-          <div>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
             <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "var(--resolving)" }}>0 Fees</div>
             <div style={{ fontSize: "0.85rem", color: "var(--text-2)", marginTop: "0.25rem", fontWeight: 500 }}>
               USDC Gas Sponsored
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Predict Opinions / Newsletter Banner Section (PredGen Style with 4Cast Design System) ─────────────────────────── */}
       <section
@@ -559,7 +566,16 @@ export function LandingPage({
         }}
       >
         {/* Center glowing crystal ball icon badge */}
-        <div
+        <motion.div
+          animate={{
+            y: [0, -6, 0],
+            boxShadow: [
+              "0 0 20px rgba(30, 104, 201, 0.2)",
+              "0 0 40px rgba(30, 104, 201, 0.45)",
+              "0 0 20px rgba(30, 104, 201, 0.2)",
+            ],
+          }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
           style={{
             width: 52,
             height: 52,
@@ -570,14 +586,17 @@ export function LandingPage({
             alignItems: "center",
             justifyContent: "center",
             fontSize: "1.4rem",
-            boxShadow: "0 0 24px rgba(30, 104, 201, 0.25)",
           }}
         >
           🔮
-        </div>
+        </motion.div>
 
         {/* Headline */}
-        <h2
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
           style={{
             fontSize: "2.5rem",
             fontWeight: 800,
@@ -589,10 +608,14 @@ export function LandingPage({
           }}
         >
           Predict opinions that matter to you.
-        </h2>
+        </motion.h2>
 
         {/* Action Buttons */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.15 }}
           style={{
             display: "flex",
             gap: "0.75rem",
@@ -601,7 +624,9 @@ export function LandingPage({
             marginBottom: "2.5rem",
           }}
         >
-          <a
+          <motion.a
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.96 }}
             href="#how-it-works"
             style={{
               background: "var(--bg-1)",
@@ -615,22 +640,16 @@ export function LandingPage({
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--bg-2)";
-              e.currentTarget.style.borderColor = "var(--teal)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--bg-1)";
-              e.currentTarget.style.borderColor = "var(--border-1)";
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             }}
           >
             <span>❓</span>
             <span>How does this work?</span>
-          </a>
+          </motion.a>
 
-          <a
+          <motion.a
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.96 }}
             href="#faq"
             style={{
               background: "var(--bg-1)",
@@ -644,24 +663,20 @@ export function LandingPage({
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--bg-2)";
-              e.currentTarget.style.borderColor = "var(--teal)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--bg-1)";
-              e.currentTarget.style.borderColor = "var(--border-1)";
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             }}
           >
             <span>💬</span>
             <span>Submit Feedback</span>
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
 
         {/* Newsletter Card Box */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.98 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.25 }}
           style={{
             maxWidth: "500px",
             width: "100%",
@@ -670,7 +685,7 @@ export function LandingPage({
             borderRadius: "var(--r-xl)",
             padding: "2rem",
             textAlign: "left",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+            boxShadow: "0 14px 35px rgba(0,0,0,0.08)",
           }}
         >
           <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-0)", marginBottom: "0.4rem" }}>
@@ -712,7 +727,9 @@ export function LandingPage({
                 width: "100%",
               }}
             />
-            <button
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               type="submit"
               disabled={subscribed}
               style={{
@@ -730,9 +747,9 @@ export function LandingPage({
               }}
             >
               {subscribed ? "Subscribed!" : "Subscribe"}
-            </button>
+            </motion.button>
           </form>
-        </div>
+        </motion.div>
       </section>
 
       {/* ── How It Works Section ─────────────────────────────── */}
@@ -756,83 +773,58 @@ export function LandingPage({
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
-            <div style={{ textAlign: "center", padding: "1.5rem" }}>
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: "var(--teal)",
-                  color: "#ffffff",
-                  fontSize: "1.35rem",
-                  fontWeight: 800,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 1.25rem",
-                }}
+            {[
+              {
+                step: 1,
+                title: "Connect Wallet",
+                desc: "Use MetaMask or Circle Passkeys to start. Claim testnet collateral directly from our faucet.",
+              },
+              {
+                step: 2,
+                title: "Take a Position",
+                desc: "Select any market and buy YES or NO position tokens based on your market conviction.",
+              },
+              {
+                step: 3,
+                title: "Settle & Claim Payout",
+                desc: "Once resolved by Optimistic Oracle, redeem winning shares 1-to-1 for USDC collateral.",
+              },
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.15 }}
+                whileHover={{ y: -4 }}
+                style={{ textAlign: "center", padding: "1.5rem" }}
               >
-                1
-              </div>
-              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-                Connect Wallet
-              </h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-                Use MetaMask or Circle Passkeys to start. Claim testnet collateral directly from our faucet.
-              </p>
-            </div>
-
-            <div style={{ textAlign: "center", padding: "1.5rem" }}>
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: "var(--teal)",
-                  color: "#ffffff",
-                  fontSize: "1.35rem",
-                  fontWeight: 800,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 1.25rem",
-                }}
-              >
-                2
-              </div>
-              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-                Take a Position
-              </h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-                Select any market and buy YES or NO position tokens based on your market conviction.
-              </p>
-            </div>
-
-            <div style={{ textAlign: "center", padding: "1.5rem" }}>
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: "var(--teal)",
-                  color: "#ffffff",
-                  fontSize: "1.35rem",
-                  fontWeight: 800,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 1.25rem",
-                }}
-              >
-                3
-              </div>
-              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-                Settle & Claim Payout
-              </h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-                Once resolved by Optimistic Oracle, redeem winning shares 1-to-1 for USDC collateral.
-              </p>
-            </div>
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: "var(--teal)",
+                    color: "#ffffff",
+                    fontSize: "1.35rem",
+                    fontWeight: 800,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 1.25rem",
+                    boxShadow: "0 6px 16px rgba(30,104,201,0.3)",
+                  }}
+                >
+                  {item.step}
+                </div>
+                <h3 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+                  {item.title}
+                </h3>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-2)", lineHeight: 1.5 }}>
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -870,9 +862,14 @@ export function LandingPage({
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1.5rem" }}>
-          {featuredMarkets.map((m) => (
-            <div
+          {featuredMarkets.map((m, idx) => (
+            <motion.div
               key={m.id}
+              initial={{ opacity: 0, y: 25 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              whileHover={{ y: -6, borderColor: "var(--teal)", boxShadow: "var(--shadow-card-hover)" }}
               onClick={() => {
                 onSelectMarket?.(m);
                 onLaunchApp();
@@ -883,15 +880,6 @@ export function LandingPage({
                 borderRadius: "var(--r-lg)",
                 padding: "1.5rem",
                 cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--teal)";
-                e.currentTarget.style.boxShadow = "var(--shadow-card-hover)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-1)";
-                e.currentTarget.style.boxShadow = "none";
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem" }}>
@@ -926,7 +914,7 @@ export function LandingPage({
                 <span style={{ color: "var(--yes-green)" }}>YES {m.yesPrice}%</span>
                 <span style={{ color: "var(--no-red)" }}>NO {m.noPrice}%</span>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -980,18 +968,28 @@ export function LandingPage({
                     <span>{faq.q}</span>
                     {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
-                  {isOpen && (
-                    <div
-                      style={{
-                        padding: "0 1.5rem 1.25rem",
-                        fontSize: "0.9rem",
-                        color: "var(--text-2)",
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {faq.a}
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        style={{ overflow: "hidden" }}
+                      >
+                        <div
+                          style={{
+                            padding: "0 1.5rem 1.25rem",
+                            fontSize: "0.9rem",
+                            color: "var(--text-2)",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          {faq.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
