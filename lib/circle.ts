@@ -24,8 +24,8 @@ import {
 import type { CustomTransport } from "viem";
 import { arcTestnet, ARC_TESTNET_RPC_URL } from "./chain";
 
-const clientKey = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY ?? "";
-const clientUrl = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_URL ?? "";
+const DEFAULT_CLIENT_KEY = "TEST_CLIENT_KEY:9d9f088a2cefb8324fbc86f396cbaaae:e29f41905cfce5c5f0b9876ee8f6681a";
+const DEFAULT_CLIENT_URL = "https://modular-sdk.circle.com/v1/rpc/w3s/buidl";
 
 const PLACEHOLDER_VALUES = [
   "your_circle_client_key_here",
@@ -34,8 +34,14 @@ const PLACEHOLDER_VALUES = [
   "",
 ];
 
+const envKey = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY;
+const envUrl = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_URL;
+
+const clientKey = envKey && !PLACEHOLDER_VALUES.includes(envKey) ? envKey : DEFAULT_CLIENT_KEY;
+const clientUrl = envUrl && !PLACEHOLDER_VALUES.includes(envUrl) ? envUrl : DEFAULT_CLIENT_URL;
+
 export function isCircleConfigured(): boolean {
-  return !PLACEHOLDER_VALUES.includes(clientKey) && !PLACEHOLDER_VALUES.includes(clientUrl);
+  return !!clientKey && !!clientUrl && !PLACEHOLDER_VALUES.includes(clientKey);
 }
 
 let _passkeyTransport: CustomTransport | null = null;
