@@ -69,7 +69,7 @@ export function getModularTransport(): CustomTransport {
   assertCircleConfigured();
   if (!_modularTransport) {
     _modularTransport = toModularTransport(
-      `${clientUrl}/arcTestnet`,
+      clientUrl,
       clientKey,
     );
   }
@@ -77,14 +77,7 @@ export function getModularTransport(): CustomTransport {
 }
 
 export function getCirclePublicClient(): PublicClient {
-  assertCircleConfigured();
-  if (!_circlePublicClient) {
-    _circlePublicClient = createPublicClient({
-      chain: arcTestnet,
-      transport: getModularTransport(),
-    });
-  }
-  return _circlePublicClient;
+  return getDirectPublicClient();
 }
 
 // Direct (non-bundler) RPC client — used for reading on-chain state like the
