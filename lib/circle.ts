@@ -27,7 +27,12 @@ import { arcTestnet, ARC_TESTNET_RPC_URL } from "./chain";
 const clientKey = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY ?? "";
 const clientUrl = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_URL ?? "";
 
-const PLACEHOLDER_VALUES = ["your_circle_client_key_here", "your_circle_client_url_here", ""];
+const PLACEHOLDER_VALUES = [
+  "your_circle_client_key_here",
+  "paste_your_client_key_here",
+  "your_circle_client_url_here",
+  "",
+];
 
 export function isCircleConfigured(): boolean {
   return !PLACEHOLDER_VALUES.includes(clientKey) && !PLACEHOLDER_VALUES.includes(clientUrl);
