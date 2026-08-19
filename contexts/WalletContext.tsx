@@ -189,9 +189,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
     } catch (err) {
       console.error("Circle wallet connection failed:", err);
-      setCircleError(
-        err instanceof Error ? err.message : "Failed to connect passkey wallet",
-      );
+      const rawMsg = err instanceof Error ? err.message : "Failed to connect passkey wallet";
+      if (rawMsg.includes("Invalid credentials")) {
+        setCircleError(
+          "Circle API rejected the request (Invalid Credentials). Please ensure '4cast-ebon.vercel.app' is saved under Modular Wallets → Configurator → Passkey in your Circle Console.",
+        );
+      } else {
+        setCircleError(rawMsg);
+      }
     } finally {
       setCircleConnecting(false);
     }
