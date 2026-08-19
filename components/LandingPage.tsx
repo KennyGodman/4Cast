@@ -276,7 +276,10 @@ export function LandingPage({
             <span>Next-Gen Prediction Market on Arc Network</span>
           </motion.div>
 
-          <h1
+          <motion.h1
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             style={{
               fontFamily: "var(--font-display)",
               fontSize: "3.2rem",
@@ -287,17 +290,38 @@ export function LandingPage({
               marginBottom: "1.25rem",
             }}
           >
-            4Cast on Arc. <br />
-            <span
+            <motion.span
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              style={{ display: "inline-block" }}
+            >
+              4Cast on Arc.
+            </motion.span>
+            <br />
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{
+                opacity: { duration: 0.6, delay: 0.3 },
+                y: { duration: 0.6, delay: 0.3 },
+                backgroundPosition: { duration: 6, repeat: Infinity, ease: "linear" },
+              }}
               style={{
-                background: "linear-gradient(135deg, var(--teal) 0%, #38bdf8 100%)",
+                background: "linear-gradient(135deg, var(--teal) 0%, #38bdf8 50%, #818cf8 100%)",
+                backgroundSize: "200% 200%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
+                display: "inline-block",
               }}
             >
               Predict opinions that matters
-            </span>
-          </h1>
+            </motion.span>
+          </motion.h1>
 
           <p
             style={{
@@ -383,20 +407,47 @@ export function LandingPage({
           </div>
         </motion.div>
 
-        {/* Right Hero Market Preview Card */}
+        {/* Right Hero Market Preview Card with Identifiable Motion */}
         <motion.div
           initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
+          animate={{
+            opacity: 1,
+            x: 0,
+            y: [0, -14, 0],
+            rotate: [0, 0.8, 0, -0.8, 0],
+          }}
+          whileHover={{ scale: 1.02, y: -18, transition: { duration: 0.25 } }}
           transition={{
             opacity: { duration: 0.8, delay: 0.2 },
             x: { duration: 0.8, delay: 0.2 },
-            y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 8, repeat: Infinity, ease: "easeInOut" },
           }}
           style={{ position: "relative" }}
         >
+          {/* Ambient Glow Backdrop */}
+          <motion.div
+            animate={{
+              opacity: [0.35, 0.7, 0.35],
+              scale: [0.95, 1.04, 0.95],
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              position: "absolute",
+              inset: "-12px",
+              borderRadius: "var(--r-xl)",
+              background: "radial-gradient(circle, rgba(30,104,201,0.28) 0%, rgba(56,189,248,0.1) 60%, transparent 80%)",
+              filter: "blur(16px)",
+              zIndex: 0,
+              pointerEvents: "none",
+            }}
+          />
+
           {/* Glass Card Stack */}
           <div
             style={{
+              position: "relative",
+              zIndex: 1,
               background: "var(--bg-1)",
               border: "1.5px solid var(--border-1)",
               borderRadius: "var(--r-xl)",
