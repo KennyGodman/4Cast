@@ -37,6 +37,8 @@ export function LandingPage({
   markets,
 }: LandingPageProps) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
 
   const featuredMarkets = markets.slice(0, 4);
 
@@ -541,113 +543,192 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* ── Features Grid Section ─────────────────────────────── */}
-      <section id="features" style={{ padding: "5rem 1.5rem", maxWidth: "1280px", margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
-          <h2 style={{ fontSize: "2.25rem", fontWeight: 800, color: "var(--text-0)" }}>
-            Engineered for Precision & Transparency
-          </h2>
-          <p style={{ fontSize: "1rem", color: "var(--text-2)", marginTop: "0.5rem" }}>
-            Everything you need for seamless prediction market trading on-chain.
-          </p>
+      {/* ── Predict Opinions / Newsletter Banner Section (PredGen Style) ─────────────────────────── */}
+      <section
+        id="features"
+        style={{
+          background: "#0c1538",
+          padding: "5rem 1.5rem",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          borderTop: "1px solid var(--border-0)",
+          borderBottom: "1px solid var(--border-0)",
+        }}
+      >
+        {/* Center glowing crystal ball icon badge */}
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: "50%",
+            background: "rgba(99, 102, 241, 0.25)",
+            border: "1px solid rgba(99, 102, 241, 0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.4rem",
+            boxShadow: "0 0 20px rgba(99, 102, 241, 0.3)",
+          }}
+        >
+          🔮
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.75rem" }}>
-          {/* Feature 1 */}
-          <div
-            style={{
-              background: "var(--bg-1)",
-              border: "1.5px solid var(--border-1)",
-              borderRadius: "var(--r-lg)",
-              padding: "2rem",
-              transition: "all 0.2s ease",
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "12px",
-                background: "var(--teal-light)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "1.25rem",
-              }}
-            >
-              <ShieldCheck size={24} color="var(--teal)" />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-              Optimistic Oracle
-            </h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-              Decentralized resolution backed by economic bond guarantees and dispute escalation.
-            </p>
-          </div>
+        {/* Headline */}
+        <h2
+          style={{
+            fontSize: "2.5rem",
+            fontWeight: 800,
+            color: "#ffffff",
+            letterSpacing: "-0.025em",
+            marginTop: "1.5rem",
+            marginBottom: "1.5rem",
+            maxWidth: "700px",
+          }}
+        >
+          Predict opinions that matter to you.
+        </h2>
 
-          {/* Feature 2 */}
-          <div
+        {/* Action Buttons */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            marginBottom: "2.5rem",
+          }}
+        >
+          <a
+            href="#how-it-works"
             style={{
-              background: "var(--bg-1)",
-              border: "1.5px solid var(--border-1)",
-              borderRadius: "var(--r-lg)",
-              padding: "2rem",
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              borderRadius: "9999px",
+              padding: "0.65rem 1.35rem",
+              color: "#ffffff",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
               transition: "all 0.2s ease",
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.35)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+            }}
           >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "12px",
-                background: "rgba(22,163,74,0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "1.25rem",
-              }}
-            >
-              <Zap size={24} color="var(--yes-green)" />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-              Circle Passkey Sign-in
-            </h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-              Log in securely using FaceID, TouchID, or hardware keys with ERC-4337 smart account abstraction.
-            </p>
-          </div>
+            <span style={{ color: "#f87171" }}>❓</span>
+            <span>How does this work?</span>
+          </a>
 
-          {/* Feature 3 */}
-          <div
+          <a
+            href="#faq"
             style={{
-              background: "var(--bg-1)",
-              border: "1.5px solid var(--border-1)",
-              borderRadius: "var(--r-lg)",
-              padding: "2rem",
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              borderRadius: "9999px",
+              padding: "0.65rem 1.35rem",
+              color: "#ffffff",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
               transition: "all 0.2s ease",
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.35)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+            }}
           >
-            <div
+            <span style={{ color: "#60a5fa" }}>💬</span>
+            <span>Submit Feedback</span>
+          </a>
+        </div>
+
+        {/* Newsletter Card Box */}
+        <div
+          style={{
+            maxWidth: "500px",
+            width: "100%",
+            background: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderRadius: "20px",
+            padding: "2rem",
+            textAlign: "left",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#ffffff", marginBottom: "0.4rem" }}>
+            Join the 4Cast Newsletter
+          </h3>
+          <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.65)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
+            Get weekly updates on the highest volume AI-resolved prediction markets.
+          </p>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (email.trim()) {
+                setSubscribed(true);
+              }
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.18)",
+              borderRadius: "9999px",
+              padding: "4px 4px 4px 16px",
+            }}
+          >
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={subscribed}
               style={{
-                width: 48,
-                height: 48,
-                borderRadius: "12px",
-                background: "rgba(217,119,6,0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "1.25rem",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#ffffff",
+                fontSize: "0.9rem",
+                width: "100%",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={subscribed}
+              style={{
+                background: "#ffffff",
+                color: "#0c1538",
+                border: "none",
+                borderRadius: "9999px",
+                padding: "0.6rem 1.4rem",
+                fontWeight: 700,
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                flexShrink: 0,
+                transition: "opacity 0.2s ease",
               }}
             >
-              <BarChart3 size={24} color="var(--resolving)" />
-            </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-              Automated Market Maker
-            </h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-2)", lineHeight: 1.5 }}>
-              Constant-product pricing guarantees continuous liquidity for instant YES and NO token position trades.
-            </p>
-          </div>
+              {subscribed ? "Subscribed!" : "Subscribe"}
+            </button>
+          </form>
         </div>
       </section>
 
