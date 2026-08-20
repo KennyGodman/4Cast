@@ -265,16 +265,10 @@ export function MarketCard({
               className="yes-btn"
               onClick={(e) => handleBet(e, "YES")}
               style={{
-                background: "rgba(22, 163, 74, 0.12)",
-                color: "var(--yes-green)",
-                border: "1px solid rgba(22, 163, 74, 0.3)",
                 borderRadius: "var(--r-md)",
                 padding: "0.45rem",
-                fontWeight: 700,
                 fontSize: "0.85rem",
                 flex: 1,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
               }}
             >
               Yes
@@ -284,16 +278,10 @@ export function MarketCard({
               className="no-btn"
               onClick={(e) => handleBet(e, "NO")}
               style={{
-                background: "rgba(220, 38, 38, 0.12)",
-                color: "var(--no-red)",
-                border: "1px solid rgba(220, 38, 38, 0.3)",
                 borderRadius: "var(--r-md)",
                 padding: "0.45rem",
-                fontWeight: 700,
                 fontSize: "0.85rem",
                 flex: 1,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
               }}
             >
               No

@@ -370,27 +370,32 @@ body {
   background: var(--bg-4);
 }
 
-.btn-green, .btn-solid-green {
-  background: var(--yes-bg);
-  color: var(--yes-green);
-  border: 1px solid var(--yes-border) !important;
-  font-weight: 600;
+.btn-green, .btn-solid-green, .yes-btn, .no-btn, .btn-yes, .btn-no {
+  background: var(--teal-light) !important;
+  color: var(--teal) !important;
+  border: 1.5px solid var(--border-teal) !important;
+  font-weight: 700;
+  transition: all 0.18s ease-in-out;
 }
-.btn-green:hover, .btn-solid-green:hover {
-  background: var(--yes-green);
-  color: #ffffff;
-  border-color: var(--yes-green) !important;
+.btn-green:hover, .btn-solid-green:hover, .yes-btn:hover, .no-btn:hover, .btn-yes:hover, .btn-no:hover,
+.yes-btn.active, .no-btn.active, .btn-yes.active, .btn-no.active {
+  background: var(--teal) !important;
+  color: #ffffff !important;
+  border-color: var(--teal) !important;
+  box-shadow: 0 4px 14px rgba(46, 16, 82, 0.3);
+  transform: translateY(-1px);
 }
 
 .btn-pink {
-  background: var(--no-bg);
-  color: var(--text-2);
-  border: 1px solid var(--no-border) !important;
-  font-weight: 600;
+  background: var(--teal-light) !important;
+  color: var(--teal) !important;
+  border: 1.5px solid var(--border-teal) !important;
+  font-weight: 700;
 }
 .btn-pink:hover {
-  background: var(--bg-4);
-  color: var(--text-0);
+  background: var(--teal) !important;
+  color: #ffffff !important;
+  border-color: var(--teal) !important;
 }
 
 /* ══════════════════════════════════════

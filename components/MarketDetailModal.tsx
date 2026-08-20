@@ -1035,24 +1035,17 @@ contract EventBasedPredictionMarket {
                           borderRadius: "var(--r-md)",
                           cursor: "pointer",
                           transition: "all 0.2s ease",
-                          ...(side === s && s === "YES"
+                          ...(side === s
                             ? {
-                                background: "rgba(34,197,94,0.18)",
-                                color: "var(--yes-green)",
-                                border: "2px solid rgba(34,197,94,0.5)",
-                                boxShadow: "0 0 16px rgba(34,197,94,0.15)",
-                              }
-                            : side === s && s === "NO"
-                            ? {
-                                background: "rgba(244,63,94,0.18)",
-                                color: "var(--no-red)",
-                                border: "2px solid rgba(244,63,94,0.5)",
-                                boxShadow: "0 0 16px rgba(244,63,94,0.15)",
+                                background: "var(--teal)",
+                                color: "#ffffff",
+                                border: "2px solid var(--teal)",
+                                boxShadow: "0 4px 14px rgba(46,16,82,0.3)",
                               }
                             : {
-                                background: "transparent",
-                                color: "var(--text-2)",
-                                border: "1px solid var(--border-1)",
+                                background: "var(--teal-light)",
+                                color: "var(--teal)",
+                                border: "1.5px solid var(--border-teal)",
                               }),
                         }}
                       >
@@ -1062,7 +1055,7 @@ contract EventBasedPredictionMarket {
                             fontSize: "0.7rem",
                             fontWeight: 500,
                             marginTop: "0.2rem",
-                            opacity: 0.7,
+                            opacity: side === s ? 0.9 : 0.75,
                             fontFamily: "var(--font-mono)",
                           }}
                         >

@@ -346,26 +346,13 @@ export function MarketCommentsSection({ marketId, marketTitle }: MarketCommentsS
                       style={{
                         padding: "0.25rem 0.65rem",
                         borderRadius: "var(--r-pill)",
-                        border: selectedSentiment === s ? "1.5px solid var(--teal)" : "1px solid var(--border-0)",
-                        background:
-                          selectedSentiment === s
-                            ? s === "YES"
-                              ? "var(--yes-bg)"
-                              : s === "NO"
-                              ? "var(--no-bg)"
-                              : "var(--bg-3)"
-                            : "var(--bg-2)",
-                        color:
-                          selectedSentiment === s
-                            ? s === "YES"
-                              ? "var(--yes-green)"
-                              : s === "NO"
-                              ? "var(--no-red)"
-                              : "var(--text-0)"
-                            : "var(--text-2)",
+                        border: selectedSentiment === s ? "1.5px solid var(--teal)" : "1px solid var(--border-teal)",
+                        background: selectedSentiment === s ? "var(--teal)" : "var(--teal-light)",
+                        color: selectedSentiment === s ? "#ffffff" : "var(--teal)",
                         fontSize: "0.75rem",
                         fontWeight: 700,
                         cursor: "pointer",
+                        transition: "all 0.15s ease",
                       }}
                     >
                       {s === "YES" ? "🟢 YES" : s === "NO" ? "🔴 NO" : "⚪ Neutral"}

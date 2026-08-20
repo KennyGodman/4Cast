@@ -393,24 +393,23 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
                   key={s}
                   onClick={() => setSide(s)}
                   style={{
-                    padding: "0.25rem 0.875rem",
+                    padding: "0.3rem 0.95rem",
                     borderRadius: "999px",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: "pointer",
-                    transition: "all 0.15s ease",
-                    border: "none",
+                    transition: "all 0.18s ease",
                     ...(side === s
                       ? {
-                          background: s === "YES" ? "#2563eb" : "#12062a",
+                          background: "var(--teal)",
                           color: "#ffffff",
-                          boxShadow: `0 2px 8px ${
-                            s === "YES" ? "rgba(37,99,235,0.35)" : "rgba(18,6,42,0.35)"
-                          }`,
+                          border: "1.5px solid var(--teal)",
+                          boxShadow: "0 2px 10px rgba(46,16,82,0.3)",
                         }
                       : {
-                          background: "#f3f4f6",
-                          color: "#6b7280",
+                          background: "var(--teal-light)",
+                          color: "var(--teal)",
+                          border: "1.5px solid var(--border-teal)",
                         }),
                   }}
                 >
