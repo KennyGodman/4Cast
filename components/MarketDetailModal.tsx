@@ -3,6 +3,7 @@ import { X, ExternalLink, Code, Clock, Users, TrendingUp, Zap, ChevronDown } fro
 import { type Address, parseUnits, formatUnits } from "viem";
 import { useWallet } from "@/contexts/WalletContext";
 import { MarketAddressProvider, useMarketAddress } from "@/contexts/MarketAddressContext";
+import { MarketCommentsSection } from "@/components/MarketCommentsSection";
 import { useAMMState, useCalcBuy, useCalcSell, useBuyYes, useBuyNo, useSellYes, useSellNo, useAMMAllowances, useApproveArctForAMM } from "@/hooks/useAMM";
 import { useMarketCardData, useMarketState, useTokenBalances, useOracleAllowance, useOracleState, useProposePrice, useDisputePrice, useSettleOracleRequest, useSettlePosition, useApproveArct } from "@/hooks/useMarket";
 import { COLLATERAL_DECIMALS, OO_V2_ADDRESS } from "@/lib/contracts/addresses";
@@ -773,6 +774,11 @@ contract EventBasedPredictionMarket {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Polykoe-styled Comments & X (Twitter) Social Activity Section */}
+            <div style={{ marginTop: "1rem" }}>
+              <MarketCommentsSection marketId={market.id} marketTitle={market.question} />
             </div>
           </div>
 
