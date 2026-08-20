@@ -467,7 +467,7 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
                     outline: "none",
                     background: "#f9fafb",
                   }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#2563eb")}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--teal)")}
                   onBlurCapture={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
                 />
               </div>
@@ -511,7 +511,7 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
                 onChange={(e) => setAmt(Number(e.target.value))}
                 style={{
                   flex: 1,
-                  accentColor: "#2563eb",
+                  accentColor: "var(--teal)",
                   height: "4px",
                   cursor: "pointer",
                 }}
@@ -559,17 +559,17 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
                     borderRadius: "6px",
                     cursor: "pointer",
                     transition: "all 0.12s",
-                    border: amount === v ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb",
-                    background: amount === v ? "#2563eb" : "#f9fafb",
+                    border: amount === v ? "1.5px solid var(--teal)" : "1.5px solid #e5e7eb",
+                    background: amount === v ? "var(--teal)" : "#f9fafb",
                     color: amount === v ? "#ffffff" : "#6b7280",
                     fontWeight: 600,
                     outline: "none",
                   }}
                   onMouseEnter={(e) => {
                     if (amount !== v) {
-                      e.currentTarget.style.background = "rgba(30,104,201,0.06)";
-                      e.currentTarget.style.borderColor = "rgba(30,104,201,0.25)";
-                      e.currentTarget.style.color = "#1e68c9";
+                      e.currentTarget.style.background = "var(--teal-light)";
+                      e.currentTarget.style.borderColor = "var(--border-teal)";
+                      e.currentTarget.style.color = "var(--teal)";
                     }
                   }}
                   onMouseLeave={(e) => {

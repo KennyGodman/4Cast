@@ -272,15 +272,15 @@ export function WalletConnectModal({ onClose, onShowAlert }: WalletConnectModalP
               style={{
                 ...categoryBtnStyle,
                 borderRadius: expandedSection === "evm" ? "12px 12px 0 0" : "12px",
-                borderColor: expandedSection === "evm" ? "#1e68c9" : "#e5e7eb",
-                background: expandedSection === "evm" ? "#eef5ff" : "#f9fafb",
+                borderColor: expandedSection === "evm" ? "#2e1052" : "#e5e7eb",
+                background: expandedSection === "evm" ? "#f3eafc" : "#f9fafb",
               }}
               onClick={() => toggleSection("evm")}
               onMouseEnter={(e) => {
                 if (expandedSection !== "evm") {
                   e.currentTarget.style.background = "#ffffff";
-                  e.currentTarget.style.borderColor = "#1e68c9";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(30,104,201,0.08)";
+                  e.currentTarget.style.borderColor = "#2e1052";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(46,16,82,0.08)";
                 }
               }}
               onMouseLeave={(e) => {
@@ -293,13 +293,13 @@ export function WalletConnectModal({ onClose, onShowAlert }: WalletConnectModalP
             >
               <span style={{ fontSize: "1.4rem" }}>🦊</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, color: expandedSection === "evm" ? "#1e68c9" : "#111827" }}>EVM Wallets</div>
+                <div style={{ fontWeight: 700, color: expandedSection === "evm" ? "#2e1052" : "#111827" }}>EVM Wallets</div>
                 <div style={{ fontSize: "0.72rem", color: "#6b7280", fontWeight: 500, marginTop: "0.1rem" }}>
                   MetaMask, Rabby, Coinbase, Brave & more
                 </div>
               </div>
               {expandedSection === "evm"
-                ? <ChevronUp size={16} color="#1e68c9" />
+                ? <ChevronUp size={16} color="#2e1052" />
                 : <ChevronDown size={16} color="#9ca3af" />}
             </button>
 
@@ -307,14 +307,14 @@ export function WalletConnectModal({ onClose, onShowAlert }: WalletConnectModalP
             {expandedSection === "evm" && (
               <div
                 style={{
-                  border: "1px solid #1e68c9",
+                  border: "1px solid #2e1052",
                   borderTop: "none",
                   borderRadius: "0 0 12px 12px",
                   padding: "0.75rem",
                   display: "flex",
                   flexDirection: "column",
                   gap: "0.4rem",
-                  background: "#f8fbff",
+                  background: "#fdfbff",
                   animation: "fadeIn 0.15s ease",
                 }}
               >
@@ -327,9 +327,9 @@ export function WalletConnectModal({ onClose, onShowAlert }: WalletConnectModalP
                       style={walletRowStyle}
                       onClick={() => handleConnectEVM(wallet.id)}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#eef5ff";
-                        e.currentTarget.style.borderColor = "#1e68c9";
-                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(30,104,201,0.10)";
+                        e.currentTarget.style.background = "#f3eafc";
+                        e.currentTarget.style.borderColor = "#2e1052";
+                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(46,16,82,0.10)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "#ffffff";
@@ -483,8 +483,8 @@ export function WalletConnectModal({ onClose, onShowAlert }: WalletConnectModalP
             onMouseEnter={(e) => {
               if (!isConnecting) {
                 e.currentTarget.style.background = "#ffffff";
-                e.currentTarget.style.borderColor = "#2563eb";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(37,99,235,0.08)";
+                e.currentTarget.style.borderColor = "#2e1052";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(46,16,82,0.08)";
               }
             }}
             onMouseLeave={(e) => {
