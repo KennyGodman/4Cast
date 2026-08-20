@@ -121,11 +121,11 @@ export function AppLoadingScreen({ onComplete, duration = 1500 }: AppLoadingScre
               width: "56px",
               height: "56px",
               borderRadius: "16px",
-              background: "linear-gradient(135deg, #1e68c9 0%, #0c438c 100%)",
+              background: "linear-gradient(135deg, #2e1052 0%, #7e22ce 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 8px 24px rgba(30, 104, 201, 0.45)",
+              boxShadow: "0 8px 24px rgba(46, 16, 82, 0.45)",
             }}
           >
             <img
@@ -186,10 +186,10 @@ export function AppLoadingScreen({ onComplete, duration = 1500 }: AppLoadingScre
             style={{
               height: "100%",
               width: `${progress}%`,
-              background: "linear-gradient(90deg, #1e68c9 0%, #38bdf8 100%)",
+              background: "linear-gradient(90deg, #2e1052 0%, #a855f7 100%)",
               borderRadius: "var(--r-pill)",
               transition: "width 0.08s ease-out",
-              boxShadow: "0 0 10px rgba(56, 189, 248, 0.6)",
+              boxShadow: "0 0 10px rgba(168, 85, 247, 0.6)",
             }}
           />
         </div>

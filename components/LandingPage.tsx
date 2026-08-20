@@ -312,7 +312,7 @@ export function LandingPage({
                 backgroundPosition: { duration: 6, repeat: Infinity, ease: "linear" },
               }}
               style={{
-                background: "linear-gradient(135deg, var(--teal) 0%, #38bdf8 50%, #818cf8 100%)",
+                background: "linear-gradient(135deg, var(--teal) 0%, #7e22ce 50%, #c084fc 100%)",
                 backgroundSize: "200% 200%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",

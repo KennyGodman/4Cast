@@ -6,17 +6,17 @@
 ════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Primary Action (Arc vibrant blue) ──────── */
-  --teal:           #1e68c9;
-  --teal-dim:       #0c438c;
-  --teal-light:     #eef5ff;
-  --teal-mid:       #1556ab;
+  /* ── Primary Action (Polykoe Deep Royal Violet) ──────── */
+  --teal:           #2e1052;
+  --teal-dim:       #210a3d;
+  --teal-light:     #f3eafc;
+  --teal-mid:       #3f176e;
 
-  /* ── Arc Network Brand ──────── */
-  --arc-blue:        #1e68c9;
-  --arc-blue-light:  #eef5ff;
-  --arc-blue-mid:    #1556ab;
-  --arc-navy:        #0c438c;
+  /* ── Arc Network & Polykoe Brand ──────── */
+  --arc-blue:        #2e1052;
+  --arc-blue-light:  #f3eafc;
+  --arc-blue-mid:    #3f176e;
+  --arc-navy:        #1d0936;
 
   /* ── Semantic UI Colors ─────────────────────────────── */
   --yes-green:      #16a34a;
@@ -30,37 +30,37 @@
   --resolving:      #d97706;
   --resolved:       #6b7280;
 
-  /* ── Background Scale (Fliq-style light) ────────────── */
-  --bg-0:   #f0f2f5;   /* Page base — light gray */
+  /* ── Background Scale (Polykoe clean light) ────────────── */
+  --bg-0:   #f3f4f8;   /* Page base — clean soft off-white */
   --bg-1:   #ffffff;   /* Cards / surfaces */
-  --bg-2:   #f8f9fa;   /* Subtle elevated */
-  --bg-3:   #f0f2f5;   /* Hover backgrounds */
-  --bg-4:   #e8eaed;   /* Active / selected */
+  --bg-2:   #f8f9fc;   /* Subtle elevated */
+  --bg-3:   #f3eafc;   /* Hover backgrounds */
+  --bg-4:   #e6d6fa;   /* Active / selected */
   --bg-header: #ffffff; /* Header background */
 
   /* ── Text Scale ─────────────────────────────────────── */
-  --text-0: #111827;   /* Primary text */
-  --text-1: #374151;   /* Secondary */
-  --text-2: #6b7280;   /* Muted */
-  --text-3: #9ca3af;   /* Placeholder / very muted */
+  --text-0: #14101e;   /* Primary text */
+  --text-1: #2b2538;   /* Secondary */
+  --text-2: #6b6378;   /* Muted */
+  --text-3: #9b94a8;   /* Placeholder / very muted */
 
   /* ── Borders ─────────────────────────────────────────── */
-  --border-0: rgba(0,0,0,0.06);
-  --border-1: rgba(0,0,0,0.10);
-  --border-2: rgba(0,0,0,0.18);
-  --border-teal: rgba(0,180,200,0.35);
-  --border-teal-bright: rgba(0,180,200,0.55);
+  --border-0: rgba(46,16,82,0.08);
+  --border-1: rgba(46,16,82,0.14);
+  --border-2: rgba(46,16,82,0.22);
+  --border-teal: rgba(46,16,82,0.45);
+  --border-teal-bright: rgba(46,16,82,0.65);
 
   /* ── Typography ──────────────────────────────────────── */
   --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ── Shadows (replacing glows) ──────────────────────── */
-  --shadow-card:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
-  --shadow-header: 0 1px 0 rgba(0,0,0,0.08);
-  --shadow-modal: 0 20px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.1);
+  /* ── Shadows ─────────────────────────────────────────── */
+  --shadow-card:  0 1px 3px rgba(46,16,82,0.06), 0 1px 2px rgba(46,16,82,0.04);
+  --shadow-card-hover: 0 6px 20px rgba(46,16,82,0.12), 0 2px 6px rgba(46,16,82,0.08);
+  --shadow-header: 0 1px 0 rgba(46,16,82,0.06);
+  --shadow-modal: 0 20px 60px rgba(46,16,82,0.22), 0 8px 20px rgba(46,16,82,0.12);
 
   /* ── Radius ──────────────────────────────────────────── */
   --r-sm: 6px;
@@ -117,14 +117,14 @@
 }
 
 /* ══════════════════════════════════════
-   DARK MODE THEME
+   DARK MODE THEME (Polykoe Dark Violet)
 ══════════════════════════════════════ */
 [data-theme="dark"] {
   /* ── Primary Action ────────────────── */
-  --teal:           #4a7fff;
-  --teal-dim:       #3a6aee;
-  --teal-light:     rgba(74,127,255,0.15);
-  --teal-mid:       #5a8fff;
+  --teal:           #a855f7;
+  --teal-dim:       #9333ea;
+  --teal-light:     rgba(168,85,247,0.16);
+  --teal-mid:       #c084fc;
 
   /* ── Semantic Colors ───────────────── */
   --yes-bg:         rgba(22,163,74,0.12);
@@ -133,21 +133,25 @@
   --no-border:      rgba(220,38,38,0.2);
 
   /* ── Background Scale ──────────────── */
-  --bg-0:           #0d0f14;   /* Page base — deep dark */
-  --bg-1:           #161a24;   /* Cards / surfaces */
-  --bg-2:           #1e2330;   /* Subtle elevated */
-  --bg-3:           #252b3b;   /* Hover backgrounds */
-  --bg-4:           #2d3448;   /* Active / selected */
-  --bg-header:      #12151f;   /* Header background */
+  --bg-0:           #0e0b16;   /* Page base — deep midnight violet */
+  --bg-1:           #181324;   /* Cards / surfaces */
+  --bg-2:           #211a31;   /* Subtle elevated */
+  --bg-3:           #2c2340;   /* Hover backgrounds */
+  --bg-4:           #382d52;   /* Active / selected */
+  --bg-header:      #120e1d;   /* Header background */
 
   /* ── Text Scale ────────────────────── */
-  --text-0:         #f0f4ff;   /* Primary text */
-  --text-1:         #c9d1e8;   /* Secondary */
-  --text-2:         #8896b3;   /* Muted */
-  --text-3:         #5a6882;   /* Placeholder */
+  --text-0:         #f5f0ff;   /* Primary text */
+  --text-1:         #d4c7ed;   /* Secondary */
+  --text-2:         #9484b3;   /* Muted */
+  --text-3:         #645582;   /* Placeholder */
 
   /* ── Borders ───────────────────────── */
-  --border-0:       rgba(255,255,255,0.06);
+  --border-0:       rgba(168,85,247,0.12);
+  --border-1:       rgba(168,85,247,0.22);
+  --border-2:       rgba(168,85,247,0.35);
+  --border-teal:    rgba(168,85,247,0.5);
+  --border-teal-bright: rgba(168,85,247,0.7);
   --border-1:       rgba(255,255,255,0.10);
   --border-2:       rgba(255,255,255,0.18);
   --border-teal:    rgba(74,127,255,0.35);
