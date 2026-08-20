@@ -198,9 +198,8 @@ export function Leaderboard() {
           >
             RANKINGS
           </span>
-          <div style={{ flex: 1, height: 1, background: "var(--border-0)" }} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div className="table-responsive" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {/* Header row */}
           <div
             style={{

@@ -323,6 +323,7 @@ function MarketDetailModalInner({
     >
       <div
         id="market-detail-panel"
+        className="modal-container"
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%",
@@ -426,7 +427,7 @@ function MarketDetailModalInner({
           </button>
         </div>
 
-        <div style={{ padding: "1.5rem", display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem" }}>
+        <div className="market-detail-grid" style={{ padding: "1.5rem", display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem" }}>
           {/* Left Column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", minWidth: 0 }}>
             {/* Description */}

@@ -277,6 +277,7 @@ export function LandingPage({
           </motion.div>
 
           <motion.h1
+            className="hero-title"
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -336,7 +337,7 @@ export function LandingPage({
           </p>
 
           {/* CTA Buttons */}
-          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+          <div className="hero-buttons" style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
             <motion.button
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}

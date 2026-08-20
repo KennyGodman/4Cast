@@ -684,9 +684,129 @@ body {
 .cursor-pointer { cursor: pointer; }
 
 /* ══════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE & MOBILE OPTIMIZATIONS
 ══════════════════════════════════════ */
+
+/* Desktops & Laptops (>= 1080px) */
+@media (min-width: 1080px) {
+  .hero-title {
+    font-size: 3.2rem !important;
+  }
+}
+
+/* Tablets & Mobile (<= 1079px) */
+@media (max-width: 1079px) {
+  .markets-page-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .markets-page-sidebar {
+    position: static !important;
+    margin-top: 1rem !important;
+    width: 100% !important;
+  }
+}
+
+/* Smartphones & Small Tablets (<= 768px) */
 @media (max-width: 768px) {
-  .hide-mobile { display: none !important; }
-  .trading-league-banner { display: none; }
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  header div {
+    padding: 0 0.5rem !important;
+    gap: 0.35rem !important;
+  }
+
+  #header-search {
+    max-width: 120px !important;
+    font-size: 0.75rem !important;
+    padding-left: 1.75rem !important;
+    height: 32px !important;
+  }
+
+  /* Modals on Mobile */
+  .modal-container, [role="dialog"] {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 92vh !important;
+    padding: 1.15rem !important;
+    border-radius: 16px !important;
+    margin: 0 auto;
+  }
+
+  /* Market Detail Modal Grid on Mobile */
+  .market-detail-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Landing Page Mobile Scaling */
+  .hero-title {
+    font-size: clamp(1.85rem, 6.5vw, 2.5rem) !important;
+    line-height: 1.2 !important;
+  }
+  
+  .hero-buttons {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .hero-buttons button, .hero-buttons a {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .stats-grid, .features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .newsletter-form {
+    flex-direction: column !important;
+    border-radius: var(--r-lg) !important;
+    padding: 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .newsletter-form input {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .newsletter-form button {
+    width: 100% !important;
+  }
+
+  /* Tables Responsive Scroll */
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .trading-league-banner {
+    display: none !important;
+  }
+}
+
+/* Extra Small Phones (<= 480px) */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  .cat-pill {
+    padding: 0.25rem 0.65rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .market-card {
+    padding: 0.85rem !important;
+  }
+
+  .yes-btn, .no-btn {
+    padding: 0.4rem 0.25rem !important;
+    font-size: 0.78rem !important;
+  }
 }
