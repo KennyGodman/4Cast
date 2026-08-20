@@ -24,7 +24,7 @@ import {
 import type { CustomTransport } from "viem";
 import { arcTestnet, ARC_TESTNET_RPC_URL } from "./chain";
 
-const DEFAULT_CLIENT_KEY = "TEST_CLIENT_KEY:9d9f088a2cefb8324fbc86f396cbaaae:e29f41905cfce5c5f0b9876ee8f6681a";
+const DEFAULT_CLIENT_KEY = "TEST_CLIENT_KEY:8eafb8ce0550ac230cb87b4c97861211:bf92c4cf9cfd104a51c66b5c1295232e";
 const DEFAULT_CLIENT_URL = "https://modular-sdk.circle.com/v1/rpc/w3s/buidl";
 
 const PLACEHOLDER_VALUES = [
