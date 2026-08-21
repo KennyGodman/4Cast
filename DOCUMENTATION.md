@@ -79,10 +79,10 @@ By combining **Circle Passkey Web3 Wallets**, **Arc Network's sub-second finalit
 
 1. **Connect Wallet**: Click **Connect Wallet** to sign in with Circle Passkey (biometric) or MetaMask.
 2. **Explore Markets**: Browse predictions on the main directory or filter by category.
-3. **Analyze & Discuss**: View probability odds (e.g., `YES 68% | NO 32%`), inspect contract code, or read community thoughts on the right sidebar.
+3. **Analyze & Discuss**: View probability odds (e.g., `YES 54% | NO 46%`), inspect contract code, or read community thoughts on the right sidebar.
 4. **Place Position**: Click **YES** or **NO** on a market card, select an amount (USDC), and confirm the position.
 5. **Share on 𝕏**: Click **Post to 𝕏** to share your prediction and position directly with your X followers.
-6. **Settle & Claim**: When the market expires, proposal liveness concludes, and winning position holders claim payouts on the **My Bets** page.
+6. **Settle & Claim**: Settled with $USDC on Arc. Winning position holders claim payouts on the **My Bets** page.
 
 ---
 
