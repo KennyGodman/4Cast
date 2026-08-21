@@ -281,10 +281,10 @@ export function LandingPage({
               fontFamily: "var(--font-display)",
               fontSize: "3.2rem",
               fontWeight: 900,
-              lineHeight: 1.12,
+              lineHeight: 1.2,
               letterSpacing: "-0.035em",
               color: "var(--text-0)",
-              marginBottom: "1.25rem",
+              marginBottom: "1.5rem",
             }}
           >
             <motion.span
@@ -297,23 +297,36 @@ export function LandingPage({
             </motion.span>
             <br />
             <motion.span
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{
                 opacity: 1,
-                y: 0,
+                scale: [0.98, 1.03, 0.98],
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                boxShadow: [
+                  "0 6px 20px rgba(245, 158, 11, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.6)",
+                  "0 10px 32px rgba(245, 158, 11, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.9)",
+                  "0 6px 20px rgba(245, 158, 11, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.6)",
+                ],
               }}
               transition={{
                 opacity: { duration: 0.6, delay: 0.3 },
-                y: { duration: 0.6, delay: 0.3 },
-                backgroundPosition: { duration: 6, repeat: Infinity, ease: "linear" },
+                scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                backgroundPosition: { duration: 5, repeat: Infinity, ease: "linear" },
+                boxShadow: { duration: 4, repeat: Infinity, ease: "easeInOut" },
               }}
               style={{
-                background: "linear-gradient(135deg, var(--teal) 0%, #7e22ce 50%, #c084fc 100%)",
-                backgroundSize: "200% 200%",
+                marginTop: "0.6rem",
+                padding: "0.45rem 1.6rem",
+                borderRadius: "var(--r-pill)",
+                background: "linear-gradient(120deg, #f59e0b 0%, #fbbf24 25%, #d97706 50%, #9333ea 75%, #f59e0b 100%)",
+                backgroundSize: "300% 300%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 display: "inline-block",
+                border: "2px solid rgba(245, 158, 11, 0.45)",
+                backgroundClip: "text",
+                backdropFilter: "blur(12px)",
+                filter: "drop-shadow(0 4px 12px rgba(245, 158, 11, 0.3))",
               }}
             >
               Predict opinions that matters
@@ -914,10 +927,21 @@ export function LandingPage({
             <motion.div
               key={m.id}
               initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              whileHover={{ y: -6, borderColor: "var(--teal)", boxShadow: "var(--shadow-card-hover)" }}
+              animate={{
+                opacity: 1,
+                y: [0, -4, 0],
+                rotateX: [0, 3, -3, 0],
+                rotateY: [0, -3.5, 3.5, 0],
+              }}
+              transition={{
+                opacity: { duration: 0.5, delay: idx * 0.1 },
+                y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+                rotateX: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: idx * 0.7 },
+                rotateY: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: idx * 0.7 },
+              }}
+              whileHover={{ scale: 1.02, rotateX: 0, rotateY: 0, y: -6, borderColor: "var(--teal)", boxShadow: "var(--shadow-card-hover)" }}
               onClick={() => {
                 onSelectMarket?.(m);
                 onLaunchApp();
@@ -928,6 +952,8 @@ export function LandingPage({
                 borderRadius: "var(--r-lg)",
                 padding: "1.5rem",
                 cursor: "pointer",
+                perspective: "1000px",
+                transformStyle: "preserve-3d",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem" }}>

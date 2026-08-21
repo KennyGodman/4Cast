@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { Clock, Share2, Droplets, Zap } from "lucide-react";
 import { type MarketCardData } from "@/lib/markets";
 import { useMarketCardData } from "@/hooks/useMarket";
@@ -103,15 +104,34 @@ export function MarketCard({
     );
   }
 
+  const cardNum = parseInt((market.id || "1").replace(/\D/g, ""), 10) || 1;
+  const delaySec = (cardNum % 5) * 0.7;
+
   return (
     <>
-      <div
+      <motion.div
         id={`market-card-${market.id}`}
         className="market-card"
         onClick={() => onDetailClick(market)}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{
+          opacity: 1,
+          y: [0, -4, 0],
+          rotateX: [0, 3, -3, 0],
+          rotateY: [0, -3.5, 3.5, 0],
+        }}
+        transition={{
+          opacity: { duration: 0.4 },
+          y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+          rotateX: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: delaySec },
+          rotateY: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: delaySec },
+        }}
+        whileHover={{ scale: 1.025, rotateX: 0, rotateY: 0, y: -6 }}
+        whileTap={{ scale: 0.98 }}
         style={{
           cursor: "pointer",
-          opacity: 1,
+          perspective: "1000px",
+          transformStyle: "preserve-3d",
         }}
         role="button"
         tabIndex={0}
@@ -346,7 +366,7 @@ export function MarketCard({
             <Share2 size={13} strokeWidth={1.8} />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {pendingSide && (
         <BetConfirmModal
