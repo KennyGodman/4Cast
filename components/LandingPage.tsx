@@ -41,6 +41,20 @@ export function LandingPage({
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
+  const heroMarket = markets.find(
+    (m) => m.id === "arc-mainnet-tvl" || m.title.includes("TVL reaches $100M")
+  ) || {
+    id: "arc-mainnet-tvl",
+    address: "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+    title: "Arc Mainnet TVL reaches $100M within 30 days of launch?",
+    icon: "🌐",
+    yesPrice: 0.54,
+    noPrice: 0.46,
+    volume: "$98.5K",
+    category: "Arc Network",
+    isReal: true,
+  };
+
   const featuredMarkets = markets.slice(0, 4);
 
   const faqs = [
@@ -448,6 +462,10 @@ export function LandingPage({
 
           {/* Glass Card Stack */}
           <div
+            onClick={() => {
+              onSelectMarket?.(heroMarket);
+              onLaunchApp();
+            }}
             style={{
               position: "relative",
               zIndex: 1,
@@ -459,6 +477,7 @@ export function LandingPage({
               display: "flex",
               flexDirection: "column",
               gap: "1.25rem",
+              cursor: "pointer",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -482,7 +501,7 @@ export function LandingPage({
             </div>
 
             <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-0)", lineHeight: 1.35 }}>
-              Will Bitcoin exceed $150,000 before the end of Q4 2026?
+              {heroMarket.title}
             </h3>
 
             {/* YES / NO Probabilities Bar */}
@@ -496,8 +515,12 @@ export function LandingPage({
                   marginBottom: "0.5rem",
                 }}
               >
-                <span style={{ color: "var(--yes-green)" }}>YES 68%</span>
-                <span style={{ color: "var(--no-red)" }}>NO 32%</span>
+                <span style={{ color: "var(--yes-green)" }}>
+                  YES {Math.round(heroMarket.yesPrice * 100)}%
+                </span>
+                <span style={{ color: "var(--no-red)" }}>
+                  NO {Math.round(heroMarket.noPrice * 100)}%
+                </span>
               </div>
               <div
                 style={{
@@ -510,7 +533,7 @@ export function LandingPage({
               >
                 <div
                   style={{
-                    width: "68%",
+                    width: `${Math.round(heroMarket.yesPrice * 100)}%`,
                     background: "var(--yes-green)",
                     transition: "width 0.5s ease",
                   }}
@@ -522,7 +545,11 @@ export function LandingPage({
             {/* Quick Action Buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
               <button
-                onClick={onLaunchApp}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectMarket?.(heroMarket);
+                  onLaunchApp();
+                }}
                 style={{
                   background: "var(--yes-bg)",
                   border: "1.5px solid var(--yes-border)",
@@ -539,10 +566,14 @@ export function LandingPage({
                   transition: "all 0.15s ease",
                 }}
               >
-                <span>Buy YES 68¢</span>
+                <span>Buy YES {Math.round(heroMarket.yesPrice * 100)}¢</span>
               </button>
               <button
-                onClick={onLaunchApp}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectMarket?.(heroMarket);
+                  onLaunchApp();
+                }}
                 style={{
                   background: "var(--no-bg)",
                   border: "1.5px solid var(--no-border)",
@@ -559,7 +590,7 @@ export function LandingPage({
                   transition: "all 0.15s ease",
                 }}
               >
-                <span>Buy NO 32¢</span>
+                <span>Buy NO {Math.round(heroMarket.noPrice * 100)}¢</span>
               </button>
             </div>
           </div>
