@@ -297,36 +297,29 @@ export function LandingPage({
             </motion.span>
             <br />
             <motion.span
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{
                 opacity: 1,
-                scale: [0.98, 1.03, 0.98],
+                y: 0,
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                boxShadow: [
-                  "0 6px 20px rgba(245, 158, 11, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.6)",
-                  "0 10px 32px rgba(245, 158, 11, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.9)",
-                  "0 6px 20px rgba(245, 158, 11, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.6)",
-                ],
               }}
               transition={{
                 opacity: { duration: 0.6, delay: 0.3 },
-                scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                y: { duration: 0.6, delay: 0.3 },
                 backgroundPosition: { duration: 5, repeat: Infinity, ease: "linear" },
-                boxShadow: { duration: 4, repeat: Infinity, ease: "easeInOut" },
               }}
               style={{
-                marginTop: "0.6rem",
-                padding: "0.45rem 1.6rem",
-                borderRadius: "var(--r-pill)",
-                background: "linear-gradient(120deg, #f59e0b 0%, #fbbf24 25%, #d97706 50%, #9333ea 75%, #f59e0b 100%)",
+                display: "inline-block",
+                marginTop: "0.4rem",
+                padding: "0.2rem 0.75rem",
+                borderRadius: "16px",
+                background: "linear-gradient(120deg, #f59e0b 0%, #fbbf24 30%, #d97706 60%, #9333ea 85%, #f59e0b 100%)",
                 backgroundSize: "300% 300%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                display: "inline-block",
-                border: "2px solid rgba(245, 158, 11, 0.45)",
-                backgroundClip: "text",
-                backdropFilter: "blur(12px)",
-                filter: "drop-shadow(0 4px 12px rgba(245, 158, 11, 0.3))",
+                border: "1.5px solid rgba(245, 158, 11, 0.35)",
+                boxShadow: "0 4px 20px rgba(245, 158, 11, 0.15)",
+                backdropFilter: "blur(8px)",
               }}
             >
               Predict opinions that matters
