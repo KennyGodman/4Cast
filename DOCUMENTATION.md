@@ -30,11 +30,11 @@ By combining **Circle Passkey Web3 Wallets**, **Arc Network's sub-second finalit
 - **Propose & Dispute Console**: Anyone can propose an outcome (YES/NO) with an on-chain bond, triggering a liveness challenge window before automated smart contract settlement.
 - **Transparent Solidity Code Viewer**: Users can inspect the exact deployed smart contract code for every market directly inside the app.
 
-### 💬 4. Social Discussion & 𝕏 (Twitter) Integration
-- **Persistent Right Sidebar**: A dedicated social discussion panel sits alongside prediction market grids.
-- **Position Sentiment Tagging**: Users post thoughts tagged with their market stance (`🟢 YES`, `🔴 NO`, `⚪ Neutral`).
-- **1-Click 𝕏 (Twitter) Share & Compose**: Includes **"Post to 𝕏"** buttons that open pre-filled tweets formatted with the market title, user position, and `#4CastOnArc` hashtag.
-- **Subscribe to Top Predictors**: Live updates and social feeds from top traders.
+### 🗣️🔥 4. Marquee Social Feature: Live Market Comments & 𝕏 (Twitter) Integration
+- **Direct 𝕏 (Twitter) Commenting & Intent**: Users can express opinions and immediately broadcast their market calls straight to **𝕏 (Twitter)** with 1-click **"Post to 𝕏"** buttons. Pre-filled tweets include the exact market title, their active position (`YES`/`NO`), and custom viral hashtags (`#4Cast #ArcNetwork #PredictionMarkets`).
+- **Persistent Discussion Sidebar**: A dedicated social feed is embedded right next to the prediction market grid on desktop and stacked seamlessly on mobile screens.
+- **Position Sentiment Badges**: Every comment is tagged with the user's stance (`🟢 YES`, `🔴 NO`, `⚪ Neutral`), creating an instant crowd-sentiment pulse on every prediction.
+- **Subscribe to Top Predictors**: Follow top traders' rationale, upvote commentary, and get real-time market activity alerts.
 
 ### 🏆 5. Complete Trader Suite
 - **Market Directory**: Filter by 6 categories (*Arc Network, Crypto, Economy, Equities, Commodities, Geopolitics*) and sort by Volume, Pool Size, or Closing Date.

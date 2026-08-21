@@ -49,10 +49,6 @@ export function LandingPage({
       a: "4Cast is a decentralized binary prediction market built on Arc Network. It allows users to trade positions on future events in crypto, economics, technology, and geopolitics.",
     },
     {
-      q: "How are markets resolved?",
-      a: "Market resolution is secured by Optimistic Oracle resolution. Anyone can propose an outcome with a bond, and if undisputed during the liveness period, the market settles trustlessly on-chain.",
-    },
-    {
       q: "Do I need a Web3 wallet like MetaMask?",
       a: "No! You can connect with standard EVM wallets like MetaMask, or sign in using Circle Passkey wallets with FaceID, TouchID, or device PIN — no seed phrases or browser extension required.",
     },
