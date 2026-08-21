@@ -216,7 +216,7 @@ export function MarketsPage({
         )}
       </div>
 
-      {/* Right Sidebar: Polykoe Comments & X Discussion Section */}
+      {/* Right Sidebar: Comments & X Discussion Section */}
       <div className="markets-page-sidebar" style={{ position: "sticky", top: "85px" }}>
         <MarketCommentsSection marketId="global_feed" marketTitle="4Cast Arc Prediction Markets" />
       </div>

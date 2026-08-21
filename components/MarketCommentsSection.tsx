@@ -235,7 +235,7 @@ export function MarketCommentsSection({ marketId, marketTitle }: MarketCommentsS
         </div>
       </div>
 
-      {/* ── Main Comments & X Info Box (Polykoe Tabbed Style) ────── */}
+      {/* ── Main Comments & X Info Box ────── */}
       <div
         style={{
           background: "var(--bg-1)",

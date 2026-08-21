@@ -777,7 +777,7 @@ contract EventBasedPredictionMarket {
               </div>
             </div>
 
-            {/* Polykoe-styled Comments & X (Twitter) Social Activity Section */}
+            {/* Comments & X (Twitter) Social Activity Section */}
             <div style={{ marginTop: "1rem" }}>
               <MarketCommentsSection marketId={market.id} marketTitle={market.title} />
             </div>

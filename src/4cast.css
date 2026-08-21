@@ -1,18 +1,18 @@
 /* ════════════════════════════════════════════════════════
-   4Cast Design System — Fliq.one-Inspired Theme
-   Theme: Light gray page · White cards · Blue accent
-   Accent: #1e68c9 (blue) · #16a34a (yes-green) · #dc2626 (no-red)
+   4Cast Design System — Royal Violet Theme
+   Theme: Light gray page · White cards · Royal Violet accent
+   Accent: #2e1052 (royal violet) · #16a34a (yes-green) · #dc2626 (no-red)
    Fonts: Inter (body) via Google Fonts
 ════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Primary Action (Polykoe Deep Royal Violet) ──────── */
+  /* ── Primary Action (Deep Royal Violet) ──────── */
   --teal:           #2e1052;
   --teal-dim:       #210a3d;
   --teal-light:     #f3eafc;
   --teal-mid:       #3f176e;
 
-  /* ── Arc Network & Polykoe Brand ──────── */
+  /* ── Arc Network Brand ──────── */
   --arc-blue:        #2e1052;
   --arc-blue-light:  #f3eafc;
   --arc-blue-mid:    #3f176e;
