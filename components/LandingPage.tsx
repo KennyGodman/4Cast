@@ -872,7 +872,7 @@ export function LandingPage({
               {
                 step: 3,
                 title: "Settle & Claim Payout",
-                desc: "Once resolved by Optimistic Oracle, redeem winning shares 1-to-1 for USDC collateral.",
+                desc: "Settled with $USDC on Arc",
               },
             ].map((item, idx) => (
               <motion.div
