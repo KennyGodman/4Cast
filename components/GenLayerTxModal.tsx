@@ -1,9 +1,9 @@
-import React, { useMemo, useEffect, useRef } from "react";
-import { X, Sparkles, Shield, Cpu, ExternalLink } from "lucide-react";
+import React, { useMemo, useEffect, useRef, useState } from "react";
+import { X, Sparkles, Shield, Cpu, ExternalLink, AlertTriangle, ArrowRightLeft, Loader2 } from "lucide-react";
 import { GenLayerTransactionPanel } from "@genlayer/transaction-kit-react";
 import "@genlayer/transaction-kit-react/styles.css";
 import type { SubmitInput, TrackedStatus } from "@genlayer/transaction-kit";
-import { getGenLayerTransactionKit, STUDIO_NEXT_CHAIN_ID, STUDIO_NEXT_EXPLORER_URL } from "@/lib/genlayer";
+import { getGenLayerTransactionKit, switchToStudioNext, STUDIO_NEXT_CHAIN_ID, STUDIO_NEXT_EXPLORER_URL } from "@/lib/genlayer";
 
 interface GenLayerTxModalProps {
   isOpen: boolean;
@@ -27,6 +27,35 @@ export function GenLayerTxModal({
   onDone,
 }: GenLayerTxModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [currentChainId, setCurrentChainId] = useState<number | null>(null);
+  const [isSwitching, setIsSwitching] = useState(false);
+
+  // Track wallet's active chain ID
+  useEffect(() => {
+    if (!isOpen || typeof window === "undefined") return;
+    const eth = (window as any).ethereum;
+    if (!eth) return;
+
+    const parseChain = (val: any) => {
+      if (!val) return null;
+      if (typeof val === "string" && val.startsWith("0x")) return parseInt(val, 16);
+      return Number(val);
+    };
+
+    eth
+      .request({ method: "eth_chainId" })
+      .then((hex: string) => setCurrentChainId(parseChain(hex)))
+      .catch((err: any) => console.warn("Failed to get current chainId:", err));
+
+    const handleChainChanged = (newChainHex: string) => {
+      setCurrentChainId(parseChain(newChainHex));
+    };
+
+    eth.on?.("chainChanged", handleChainChanged);
+    return () => {
+      eth.removeListener?.("chainChanged", handleChainChanged);
+    };
+  }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
@@ -38,6 +67,20 @@ export function GenLayerTxModal({
     }
     return () => document.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
+
+  const handleSwitchNetwork = async () => {
+    setIsSwitching(true);
+    try {
+      const ok = await switchToStudioNext();
+      if (ok) {
+        setCurrentChainId(STUDIO_NEXT_CHAIN_ID);
+      }
+    } finally {
+      setIsSwitching(false);
+    }
+  };
+
+  const isWrongChain = currentChainId !== null && currentChainId !== STUDIO_NEXT_CHAIN_ID;
 
   // Instantiate Transaction Kit
   const kit = useMemo(() => {
@@ -165,7 +208,105 @@ export function GenLayerTxModal({
 
         {/* Content body */}
         <div style={{ padding: "1.5rem", overflowY: "auto", flex: 1 }}>
-          {kit ? (
+          {isWrongChain ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "2rem 1.25rem",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+              <div
+                style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "16px",
+                  background: darkMode ? "rgba(245, 158, 11, 0.15)" : "rgba(245, 158, 11, 0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#f59e0b",
+                  border: darkMode ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(245, 158, 11, 0.2)",
+                }}
+              >
+                <AlertTriangle size={28} />
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "0.4rem" }}>
+                  Network Mismatch Detected
+                </h3>
+                <p
+                  style={{
+                    fontSize: "0.86rem",
+                    color: darkMode ? "#9ca3af" : "#6b7280",
+                    lineHeight: 1.5,
+                    maxWidth: "400px",
+                    margin: "0 auto",
+                  }}
+                >
+                  Your wallet is currently connected to <strong>Chain ID {currentChainId}</strong>. GenLayer Intelligent Contract transactions require switching to <strong>GenLayer Studio Next</strong> (Chain ID: {STUDIO_NEXT_CHAIN_ID}).
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                  border: darkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.06)",
+                  borderRadius: "12px",
+                  padding: "0.75rem 1rem",
+                  fontSize: "0.8rem",
+                  width: "100%",
+                  maxWidth: "400px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ color: darkMode ? "#9ca3af" : "#6b7280" }}>Required Network:</span>
+                <span style={{ fontWeight: 600, color: "#a855f7" }}>Studio Next ({STUDIO_NEXT_CHAIN_ID})</span>
+              </div>
+
+              <button
+                onClick={handleSwitchNetwork}
+                disabled={isSwitching}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  width: "100%",
+                  maxWidth: "400px",
+                  padding: "0.85rem 1.25rem",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg, #7928ca 0%, #a855f7 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: "0.92rem",
+                  cursor: isSwitching ? "not-allowed" : "pointer",
+                  boxShadow: "0 4px 16px rgba(168, 85, 247, 0.4)",
+                  transition: "all 0.15s ease",
+                  opacity: isSwitching ? 0.8 : 1,
+                }}
+              >
+                {isSwitching ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Switching Network in Wallet...</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowRightLeft size={18} />
+                    <span>Switch to GenLayer Studio Next</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : kit ? (
             <div className="genlayer-panel-container">
               <GenLayerTransactionPanel
                 kit={kit}

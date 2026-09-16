@@ -7,7 +7,12 @@ import { useAMMState, useCalcBuy, useBuyYes, useBuyNo, useApproveArctForAMM, use
 import { COLLATERAL_DECIMALS } from "@/lib/contracts/addresses";
 import { saveUserBet, generateTxHash, type UserBet } from "@/lib/bets";
 import { GenLayerTxModal } from "./GenLayerTxModal";
-import { GENLAYER_PREDICTION_MARKET_ADDRESS, STUDIO_NEXT_CHAIN_ID, STUDIO_NEXT_EXPLORER_URL } from "@/lib/genlayer";
+import {
+  GENLAYER_PREDICTION_MARKET_ADDRESS,
+  STUDIO_NEXT_CHAIN_ID,
+  STUDIO_NEXT_EXPLORER_URL,
+  switchToStudioNext,
+} from "@/lib/genlayer";
 
 const PRESETS = [10, 50, 100, 500];
 
@@ -61,6 +66,22 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   const [placedTx, setPlacedTx] = useState("");
   const [showGenLayerModal, setShowGenLayerModal] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  const handleOpenGenLayerModal = async () => {
+    const eth = typeof window !== "undefined" ? (window as any).ethereum : null;
+    if (eth) {
+      try {
+        const hex = await eth.request({ method: "eth_chainId" });
+        const currentChain = typeof hex === "string" && hex.startsWith("0x") ? parseInt(hex, 16) : Number(hex);
+        if (currentChain !== STUDIO_NEXT_CHAIN_ID) {
+          await switchToStudioNext();
+        }
+      } catch (e) {
+        console.warn("Chain switch check error prior to GenLayer modal:", e);
+      }
+    }
+    setShowGenLayerModal(true);
+  };
 
   // AMM state & calculations
   const { yesPrice, noPrice, isLoading: isAmmLoading } = useAMMState();
@@ -769,7 +790,7 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             <button
               id="genlayer-txkit-bet-btn"
               type="button"
-              onClick={() => setShowGenLayerModal(true)}
+              onClick={handleOpenGenLayerModal}
               style={{
                 width: "100%",
                 padding: "0.75rem",
