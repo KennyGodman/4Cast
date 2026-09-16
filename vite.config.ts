@@ -28,6 +28,10 @@ export default defineConfig(({ mode }) => {
       "process.env.NEXT_PUBLIC_MOCK_ORACLE_ADDRESS": JSON.stringify(env.NEXT_PUBLIC_MOCK_ORACLE_ADDRESS || ""),
       "process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY": JSON.stringify(env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY || ""),
       "process.env.NEXT_PUBLIC_CIRCLE_CLIENT_URL": JSON.stringify(env.NEXT_PUBLIC_CIRCLE_CLIENT_URL || ""),
+      "process.env.VITE_GENLAYER_RPC_URL": JSON.stringify(env.VITE_GENLAYER_RPC_URL || "https://studio-next.genlayer.com/api"),
+      "process.env.VITE_GENLAYER_CHAIN_ID": JSON.stringify(env.VITE_GENLAYER_CHAIN_ID || "61997"),
+      "process.env.VITE_GENLAYER_EXPLORER_URL": JSON.stringify(env.VITE_GENLAYER_EXPLORER_URL || "https://explorer-studio-dev.genlayer.com"),
+      "process.env.VITE_GENLAYER_CONTRACT_ADDRESS": JSON.stringify(env.VITE_GENLAYER_CONTRACT_ADDRESS || "0x30bAF43D32b86005f7c2E2247E2F395e6b2aEC6f"),
     },
     server: {
       port: 3000,

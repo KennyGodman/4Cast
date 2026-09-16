@@ -1,11 +1,73 @@
-# 🔮 4Cast on Arc Network — Product & Technical Documentation
+# 🔮 4Cast on GenLayer Studio Next & Arc Network — Technical Documentation
 
 > **Predict opinions that matter to you. Trade with confidence.**  
-> *Live Deployment: [https://4cast-ebon.vercel.app](https://4cast-ebon.vercel.app)*
+> *GenLayer Studio Next Deployment (Chain ID: 61997)*
 
 ---
 
-## 🌟 1. Executive Summary
+## ⚡ 1. GenLayer Studio Next Deployment (Hackathon Ready)
+
+4Cast is deployed on **GenLayer Studio Next** for the official GenLayer Hackathon submission. The platform leverages GenLayer's latest features, including **Consensus v0.6**, fee profiling, autonomous multi-validator AI consensus resolution, native `$GEN` betting, and **Transaction Kit RC2**.
+
+### 📋 Live Network & Contract Configuration
+
+| Parameter | Specification |
+| :--- | :--- |
+| **Network Name** | **GenLayer Studio Next** |
+| **Chain ID** | `61997` (Hex: `0xf22d`) |
+| **RPC Endpoint** | `https://studio-next.genlayer.com/api` |
+| **Block Explorer** | [https://explorer-studio-dev.genlayer.com/](https://explorer-studio-dev.genlayer.com/) |
+| **Deployed Contract Address** | [`0x30bAF43D32b86005f7c2E2247E2F395e6b2aEC6f`](https://explorer-studio-dev.genlayer.com/address/0x30bAF43D32b86005f7c2E2247E2F395e6b2aEC6f) |
+| **Deployment Tx Hash** | `0x820a153b4c403999342c4581ebf5dbb7ca94f7f532694630a146528c22c90cf8` |
+| **Consensus Finality** | `FINALIZED` (`MAJORITY_AGREE` by 5 initial validators) |
+| **Native Currency** | `$GEN` (18 Decimals) |
+| **Consensus Release** | Consensus v0.6 Family (Fee enforcement & LLM/Web equivalence) |
+| **Web IDE** | [https://studio-next.genlayer.com/](https://studio-next.genlayer.com/) |
+
+---
+
+## 🧠 2. Intelligent Contract Architecture (Python GenVM)
+
+4Cast runs an Intelligent Contract authored in Python (`contracts/prediction_market.py`) executed natively on **GenVM**:
+
+1. **Autonomous Web Data Extraction (`gl.nondet.web.render`)**:
+   Validators independently render the market's `resolution_url` into raw text directly from the live web without centralized oracles.
+2. **Validator LLM Reasoning (`gl.nondet.exec_prompt`)**:
+   Validators run an objective prompt asking the model to evaluate the retrieved web content against the market's specific resolution criteria and return a validated verdict.
+3. **Equivalence Principle (`gl.eq_principle.strict_eq`)**:
+   Non-deterministic outputs are brought to strict agreement across the validator committee, guaranteeing deterministic on-chain settlement.
+4. **Native `$GEN` Pools & Pro-Rata Payouts (`gl.transfer`)**:
+   Participants place stakes in native `$GEN`. When a market is resolved, winning participants claim their exact proportional share of the pool.
+
+---
+
+## 💰 3. Consensus v0.6 Fee Profiling & Transaction Policy
+
+In accordance with GenLayer Consensus v0.6, every transaction reserves an upfront protocol-fee deposit covering consensus time units (`timeUnits`), execution budget, storage writes, and appeal rounds:
+
+- **Measured Fee Profile (`fee-profile.json`)**:
+  - `deploy`: `45,000` time units, `4.8M` gas (~`0.475 GEN` deposit)
+  - `create_market`: `12,000` time units, `850K` gas
+  - `place_bet`: `8,000` time units, `450K` gas
+  - `resolve_market`: `65,000` time units, `3.2M` gas (allocating budget for web rendering and LLM prompt rounds)
+  - `claim_payout`: `9,000` time units, `420K` gas
+- **Live Estimation & Refund**:
+  Unused fee deposit is automatically refunded by the GenLayer protocol upon finalization.
+
+---
+
+## 🛡️ 4. Transaction Kit RC2 Integration
+
+4Cast integrates `@genlayer/transaction-kit@0.1.0-rc.2`, `@genlayer/transaction-kit-react@0.1.0-rc.2`, and `genlayer-js@2.0.0-rc.1`:
+
+- **`GenLayerTxModal.tsx`**: Renders the `GenLayerTransactionPanel` modal with complete fee transparency.
+- **Preset Posture**: Lets traders select `low`, `standard`, or `high` appeal protection.
+- **Price Protection & Caps**: Displays maximum price guarantees for storage and receipt gas.
+- **Hold-to-Sign Timeline**: Intuitive user experience tracking transactions through `submitted ➔ pending ➔ processing ➔ decided ➔ finalized`.
+
+---
+
+## 🌟 5. Executive Summary
 
 **4Cast** is a next-generation, decentralized prediction market and opinion trading platform built on **Arc Network Testnet**. 4Cast enables users to predict tomorrow's outcomes and trade position shares (`YES` / `NO`) on real-world events spanning Cryptocurrency, Macroeconomics, Geopolitics, Equities, and Arc Ecosystem milestones.
 

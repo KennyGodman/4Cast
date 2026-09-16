@@ -6,6 +6,8 @@ import { MarketAddressProvider, useMarketAddress } from "@/contexts/MarketAddres
 import { useAMMState, useCalcBuy, useBuyYes, useBuyNo, useApproveArctForAMM, useAMMAllowances } from "@/hooks/useAMM";
 import { COLLATERAL_DECIMALS } from "@/lib/contracts/addresses";
 import { saveUserBet, generateTxHash, type UserBet } from "@/lib/bets";
+import { GenLayerTxModal } from "./GenLayerTxModal";
+import { GENLAYER_PREDICTION_MARKET_ADDRESS, STUDIO_NEXT_CHAIN_ID, STUDIO_NEXT_EXPLORER_URL } from "@/lib/genlayer";
 
 const PRESETS = [10, 50, 100, 500];
 
@@ -57,6 +59,7 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   const [inputVal, setInputVal] = useState("50");
   const [placed, setPlaced] = useState(false);
   const [placedTx, setPlacedTx] = useState("");
+  const [showGenLayerModal, setShowGenLayerModal] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // AMM state & calculations
@@ -761,6 +764,39 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             </div>
           )}
 
+          {/* GenLayer Transaction Kit Button */}
+          {isConnected && (
+            <button
+              id="genlayer-txkit-bet-btn"
+              type="button"
+              onClick={() => setShowGenLayerModal(true)}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                marginTop: "0.5rem",
+                fontFamily: "var(--font-body)",
+                fontWeight: 700,
+                fontSize: "0.84rem",
+                borderRadius: "12px",
+                cursor: "pointer",
+                background: "linear-gradient(135deg, #7928ca 0%, #a855f7 100%)",
+                color: "#ffffff",
+                border: "none",
+                boxShadow: "0 4px 14px rgba(168,85,247,0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.4rem",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
+            >
+              <span>⚡</span>
+              <span>Bet with GenLayer Transaction Kit (Studio Next)</span>
+            </button>
+          )}
+
           <p
             style={{
               fontFamily: "var(--font-mono)",
@@ -768,11 +804,47 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
               color: "#9ca3af",
               textAlign: "center",
               lineHeight: 1.5,
+              marginTop: "0.5rem",
             }}
           >
-            Resolved via Optimistic Oracle V2 on Arc Testnet.
+            Supports GenLayer Studio Next (Consensus v0.6) and Arc Testnet.
           </p>
         </div>
+
+        {/* GenLayer Transaction Kit Modal */}
+        <GenLayerTxModal
+          isOpen={showGenLayerModal}
+          onClose={() => setShowGenLayerModal(false)}
+          account={address}
+          title={`Bet ${side} on GenLayer`}
+          userValue={BigInt(amount) * 10n ** 18n}
+          tx={{
+            kind: "write",
+            address: (GENLAYER_PREDICTION_MARKET_ADDRESS || "0x5776d6560F405E09148d42dF244C3F05C384351b") as `0x${string}`,
+            method: "place_bet",
+            args: [parseInt(market.id.replace(/\D/g, "") || "1", 10), side === "YES" ? 1 : 2],
+          }}
+          onDone={(status) => {
+            setShowGenLayerModal(false);
+            const txHash = (status as any)?.genlayerTxId || (status as any)?.txHash || `gl-${Date.now()}`;
+            const newBet: UserBet = {
+              id: `bet-${Date.now()}`,
+              txHash,
+              marketId: market.id,
+              marketTitle: market.title,
+              side,
+              amount,
+              placedAt: new Date().toISOString(),
+              status: "open",
+              claimed: false,
+              network: "genlayer",
+            };
+            saveUserBet(newBet);
+            if (onPlaceBet) onPlaceBet(market.id, side, amount, txHash);
+            setPlaced(true);
+            setPlacedTx(txHash);
+          }}
+        />
       </div>
     </div>
   );

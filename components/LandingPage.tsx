@@ -19,6 +19,10 @@ import {
   Sun,
   Moon,
   HelpCircle,
+  BrainCircuit,
+  CheckCircle2,
+  RefreshCw,
+  Cpu,
 } from "lucide-react";
 import { type MarketCardData } from "@/lib/markets";
 
@@ -41,6 +45,39 @@ export function LandingPage({
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
+  // GenLayer Interwoven Bets Interactive State
+  const [bet1Side, setBet1Side] = useState<"YES" | "NO">("YES");
+  const [bet1SimStep, setBet1SimStep] = useState<number>(0);
+  const [bet1Simulating, setBet1Simulating] = useState<boolean>(false);
+
+  const [bet2Side, setBet2Side] = useState<"YES" | "NO">("YES");
+  const [bet2SimStep, setBet2SimStep] = useState<number>(0);
+  const [bet2Simulating, setBet2Simulating] = useState<boolean>(false);
+
+  const runBet1Simulation = () => {
+    if (bet1Simulating) return;
+    setBet1Simulating(true);
+    setBet1SimStep(1);
+    setTimeout(() => setBet1SimStep(2), 900);
+    setTimeout(() => setBet1SimStep(3), 1800);
+    setTimeout(() => {
+      setBet1SimStep(4);
+      setBet1Simulating(false);
+    }, 2800);
+  };
+
+  const runBet2Simulation = () => {
+    if (bet2Simulating) return;
+    setBet2Simulating(true);
+    setBet2SimStep(1);
+    setTimeout(() => setBet2SimStep(2), 900);
+    setTimeout(() => setBet2SimStep(3), 1800);
+    setTimeout(() => {
+      setBet2SimStep(4);
+      setBet2Simulating(false);
+    }, 2800);
+  };
+
   const heroMarket = markets.find(
     (m) => m.id === "arc-mainnet-tvl" || m.title.includes("TVL reaches $100M")
   ) || {
@@ -52,6 +89,21 @@ export function LandingPage({
     noPrice: 0.46,
     volume: "$98.5K",
     category: "Arc Network",
+    isReal: true,
+  };
+
+  const bet1Market = heroMarket;
+  const bet2Market = markets.find(
+    (m) => m.id === "fed-rate-cut" || m.title.includes("Fed cuts interest")
+  ) || {
+    id: "fed-rate-cut",
+    address: "0x0000000000000000000000000000000000000003",
+    title: "Fed cuts interest rates before July 2026?",
+    icon: "$",
+    yesPrice: 0.71,
+    noPrice: 0.29,
+    volume: "$89.1K",
+    category: "Economy",
     isReal: true,
   };
 
@@ -634,6 +686,787 @@ export function LandingPage({
           </motion.div>
         </div>
       </motion.section>
+
+      {/* ── GenLayer Intelligent Consensus Bets Showcase (Interwoven with Framer Motion) ── */}
+      <section
+        id="genlayer-bets-showcase"
+        style={{
+          padding: "6rem 1.5rem",
+          background: "linear-gradient(180deg, var(--bg-0) 0%, rgba(147, 51, 234, 0.04) 50%, var(--bg-0) 100%)",
+          position: "relative",
+          overflow: "hidden",
+          borderTop: "1px solid var(--border-0)",
+          borderBottom: "1px solid var(--border-0)",
+        }}
+      >
+        {/* Background Ambient Glow Elements */}
+        <div
+          style={{
+            position: "absolute",
+            top: "20%",
+            left: "10%",
+            width: "350px",
+            height: "350px",
+            background: "radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)",
+            filter: "blur(60px)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "15%",
+            right: "10%",
+            width: "400px",
+            height: "400px",
+            background: "radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)",
+            filter: "blur(70px)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+
+        <div style={{ maxWidth: "1240px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+          {/* Section Header */}
+          <div style={{ textAlign: "center", marginBottom: "4rem" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.4rem 1rem",
+                borderRadius: "var(--r-pill)",
+                background: "linear-gradient(90deg, rgba(147, 51, 234, 0.12), rgba(56, 189, 248, 0.12))",
+                border: "1.5px solid rgba(147, 51, 234, 0.3)",
+                color: "#a855f7",
+                fontSize: "0.82rem",
+                fontWeight: 800,
+                letterSpacing: "0.04em",
+                marginBottom: "1rem",
+                boxShadow: "0 2px 14px rgba(147, 51, 234, 0.15)",
+              }}
+            >
+              <Cpu size={15} />
+              <span>GENLAYER CONSENSUS V0.6 · INTELLIGENT CONTRACTS</span>
+            </motion.div>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              style={{
+                fontSize: "2.6rem",
+                fontWeight: 900,
+                color: "var(--text-0)",
+                letterSpacing: "-0.03em",
+                lineHeight: 1.2,
+                maxWidth: "760px",
+                margin: "0 auto 1rem",
+              }}
+            >
+              Live AI Market Consensus in Action.
+            </motion.h2>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              style={{
+                fontSize: "1.05rem",
+                color: "var(--text-2)",
+                lineHeight: 1.6,
+                maxWidth: "680px",
+                margin: "0 auto",
+              }}
+            >
+              Two live positions interwoven by decentralized GenLayer Validator LLMs. Watch web ground truth
+              verification (<code style={{ color: "#a855f7" }}>gl.nondet.web.render</code>) and strict equivalence
+              settlement (<code style={{ color: "var(--teal)" }}>gl.eq_principle.strict_eq</code>) resolve predictions autonomously.
+            </motion.p>
+          </div>
+
+          {/* Interwoven Two-Bet Cards Grid with Dynamic Connecting Energy Ribbon */}
+          <div style={{ position: "relative" }}>
+            {/* Center Interweaving Connection Beam (Desktop) */}
+            <div
+              className="hidden lg:block"
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "40%",
+                right: "40%",
+                transform: "translateY(-50%)",
+                zIndex: 0,
+                pointerEvents: "none",
+              }}
+            >
+              <svg width="100%" height="80" viewBox="0 0 240 80" fill="none" style={{ overflow: "visible" }}>
+                <defs>
+                  <linearGradient id="beamGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#a855f7" stopOpacity="0.8" />
+                    <stop offset="50%" stopColor="#38bdf8" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0.8" />
+                  </linearGradient>
+                </defs>
+                {/* Interwoven undulating wave paths */}
+                <motion.path
+                  d="M 0 40 C 60 10, 180 70, 240 40"
+                  stroke="url(#beamGradient)"
+                  strokeWidth="3"
+                  fill="none"
+                  strokeDasharray="8 6"
+                  animate={{ strokeDashoffset: [0, -56] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                />
+                <motion.path
+                  d="M 0 40 C 60 70, 180 10, 240 40"
+                  stroke="rgba(56, 189, 248, 0.4)"
+                  strokeWidth="2"
+                  fill="none"
+                  strokeDasharray="6 8"
+                  animate={{ strokeDashoffset: [0, 56] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                />
+              </svg>
+
+              {/* Center Floating Consensus Hub Badge */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.08, 1],
+                  boxShadow: [
+                    "0 0 15px rgba(168, 85, 247, 0.3)",
+                    "0 0 30px rgba(56, 189, 248, 0.5)",
+                    "0 0 15px rgba(168, 85, 247, 0.3)",
+                  ],
+                }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  background: "var(--bg-1)",
+                  border: "2px solid #a855f7",
+                  borderRadius: "50%",
+                  width: 50,
+                  height: 50,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#ffffff",
+                  zIndex: 2,
+                }}
+              >
+                <Sparkles size={20} color="#a855f7" />
+              </motion.div>
+            </div>
+
+            {/* Two Interwoven Bet Cards */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gap: "3rem",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {/* ── BET CARD 1: Arc Network TVL Milestone ── */}
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                animate={{
+                  y: [0, -8, 0],
+                  rotateZ: [0, 0.5, 0],
+                }}
+                transition={{
+                  y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+                  rotateZ: { duration: 7, repeat: Infinity, ease: "easeInOut" },
+                  opacity: { duration: 0.7 },
+                  x: { duration: 0.7 },
+                }}
+                whileHover={{
+                  scale: 1.025,
+                  y: -12,
+                  boxShadow: "0 22px 45px rgba(168, 85, 247, 0.22)",
+                  borderColor: "rgba(168, 85, 247, 0.6)",
+                }}
+                style={{
+                  background: "var(--bg-1)",
+                  border: "1.5px solid rgba(168, 85, 247, 0.3)",
+                  borderRadius: "var(--r-xl)",
+                  padding: "2rem",
+                  boxShadow: "0 14px 35px rgba(0,0,0,0.08)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1.25rem",
+                  position: "relative",
+                  transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                }}
+              >
+                {/* Card Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        color: "#a855f7",
+                        background: "rgba(168, 85, 247, 0.12)",
+                        border: "1px solid rgba(168, 85, 247, 0.25)",
+                        padding: "0.25rem 0.65rem",
+                        borderRadius: "var(--r-pill)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                      }}
+                    >
+                      <Sparkles size={11} />
+                      <span>GenLayer Studio Next</span>
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        color: "var(--yes-green)",
+                        background: "rgba(22, 163, 74, 0.12)",
+                        border: "1px solid rgba(22, 163, 74, 0.25)",
+                        padding: "0.25rem 0.55rem",
+                        borderRadius: "var(--r-pill)",
+                      }}
+                    >
+                      MAJORITY_AGREE
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-3)", fontFamily: "var(--font-mono)" }}>
+                    Wager: 500 $GEN
+                  </span>
+                </div>
+
+                {/* Market Title */}
+                <h3
+                  onClick={() => {
+                    onSelectMarket?.(bet1Market);
+                    onLaunchApp();
+                  }}
+                  style={{
+                    fontSize: "1.3rem",
+                    fontWeight: 800,
+                    color: "var(--text-0)",
+                    lineHeight: 1.35,
+                    cursor: "pointer",
+                    margin: 0,
+                  }}
+                >
+                  {bet1Market.title}
+                </h3>
+
+                {/* Probabilities Meter */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.45rem" }}>
+                    <span style={{ color: "var(--yes-green)" }}>YES {Math.round(bet1Market.yesPrice * 100)}%</span>
+                    <span style={{ color: "var(--no-red)" }}>NO {Math.round(bet1Market.noPrice * 100)}%</span>
+                  </div>
+                  <div style={{ height: "9px", borderRadius: "var(--r-pill)", background: "var(--no-bg)", overflow: "hidden", display: "flex" }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${Math.round(bet1Market.yesPrice * 100)}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      style={{ background: "var(--yes-green)" }}
+                    />
+                    <div style={{ flex: 1, background: "var(--no-red)" }} />
+                  </div>
+                </div>
+
+                {/* GenLayer AI Consensus Box */}
+                <div
+                  style={{
+                    background: "var(--bg-2)",
+                    border: "1px solid rgba(168, 85, 247, 0.25)",
+                    borderRadius: "12px",
+                    padding: "1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.65rem",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <BrainCircuit size={15} color="#a855f7" />
+                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#a855f7" }}>
+                        GenLayer AI Verdict:
+                      </span>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--yes-green)" }}>
+                        YES (88% Confidence)
+                      </span>
+                    </div>
+
+                    <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-3)" }}>
+                      5/5 Validators Agreed
+                    </span>
+                  </div>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "0.76rem",
+                      color: "var(--text-1)",
+                      fontFamily: "var(--font-mono)",
+                      lineHeight: 1.45,
+                      background: "var(--bg-0)",
+                      padding: "0.6rem 0.75rem",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-0)",
+                    }}
+                  >
+                    "gl.nondet.web.render verified Arc Network testnet transaction velocity, bridge telemetry, and Circle developer commits. Multi-validator consensus achieved majority agreement."
+                  </p>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-3)", fontFamily: "var(--font-mono)" }}>
+                    <span>Source: testnet.arcscan.app</span>
+                    <span style={{ color: "var(--teal)" }}>strict_eq() Verified</span>
+                  </div>
+                </div>
+
+                {/* Interactive Consensus Simulation Sequence */}
+                {bet1SimStep > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    style={{
+                      background: "rgba(168, 85, 247, 0.08)",
+                      border: "1px solid rgba(168, 85, 247, 0.3)",
+                      borderRadius: "10px",
+                      padding: "0.75rem",
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, color: "#a855f7", marginBottom: "0.4rem" }}>
+                      <RefreshCw size={13} className={bet1Simulating ? "animate-spin" : ""} />
+                      <span>
+                        {bet1SimStep === 1 && "1/3: Fetching Web Ground Truth via gl.nondet.web.render()..."}
+                        {bet1SimStep === 2 && "2/3: Prompting Validator LLMs via gl.nondet.exec_prompt()..."}
+                        {bet1SimStep === 3 && "3/3: Running Equivalence Principle (strict_eq)..."}
+                        {bet1SimStep === 4 && "Consensus Finalized: MAJORITY_AGREE Sealed!"}
+                      </span>
+                    </div>
+                    <div style={{ width: "100%", height: 4, background: "rgba(0,0,0,0.1)", borderRadius: 2, overflow: "hidden" }}>
+                      <motion.div
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${bet1SimStep * 25}%` }}
+                        style={{ height: "100%", background: "linear-gradient(90deg, #a855f7, #38bdf8)" }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Interactive Position Controls & CTA */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
+                    <button
+                      onClick={() => setBet1Side("YES")}
+                      style={{
+                        background: bet1Side === "YES" ? "var(--yes-bg)" : "var(--bg-2)",
+                        border: `1.5px solid ${bet1Side === "YES" ? "var(--yes-border)" : "var(--border-1)"}`,
+                        color: "var(--yes-green)",
+                        borderRadius: "var(--r-md)",
+                        padding: "0.65rem",
+                        fontWeight: 800,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.3rem",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>Position YES {Math.round(bet1Market.yesPrice * 100)}¢</span>
+                    </button>
+                    <button
+                      onClick={() => setBet1Side("NO")}
+                      style={{
+                        background: bet1Side === "NO" ? "var(--no-bg)" : "var(--bg-2)",
+                        border: `1.5px solid ${bet1Side === "NO" ? "var(--no-border)" : "var(--border-1)"}`,
+                        color: "var(--no-red)",
+                        borderRadius: "var(--r-md)",
+                        padding: "0.65rem",
+                        fontWeight: 800,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.3rem",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>Position NO {Math.round(bet1Market.noPrice * 100)}¢</span>
+                    </button>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.6rem" }}>
+                    <button
+                      onClick={runBet1Simulation}
+                      disabled={bet1Simulating}
+                      style={{
+                        flex: 1,
+                        background: "rgba(168, 85, 247, 0.12)",
+                        border: "1.5px solid rgba(168, 85, 247, 0.4)",
+                        color: "#a855f7",
+                        borderRadius: "var(--r-pill)",
+                        padding: "0.65rem",
+                        fontWeight: 700,
+                        fontSize: "0.82rem",
+                        cursor: bet1Simulating ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      <Cpu size={14} />
+                      <span>{bet1Simulating ? "Running AI..." : "Test AI Consensus"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onSelectMarket?.(bet1Market);
+                        onLaunchApp();
+                      }}
+                      style={{
+                        flex: 1.2,
+                        background: "linear-gradient(135deg, #9333ea, #6366f1)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "var(--r-pill)",
+                        padding: "0.65rem",
+                        fontWeight: 800,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.4rem",
+                        boxShadow: "0 4px 14px rgba(147, 51, 234, 0.35)",
+                      }}
+                    >
+                      <span>Place Bet (Studio Next)</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* ── BET CARD 2: Fed Interest Rate Cut ── */}
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                animate={{
+                  y: [-8, 0, -8],
+                  rotateZ: [0, -0.5, 0],
+                }}
+                transition={{
+                  y: { duration: 5.2, repeat: Infinity, ease: "easeInOut" },
+                  rotateZ: { duration: 7.2, repeat: Infinity, ease: "easeInOut" },
+                  opacity: { duration: 0.7, delay: 0.1 },
+                  x: { duration: 0.7, delay: 0.1 },
+                }}
+                whileHover={{
+                  scale: 1.025,
+                  y: -12,
+                  boxShadow: "0 22px 45px rgba(56, 189, 248, 0.22)",
+                  borderColor: "rgba(56, 189, 248, 0.6)",
+                }}
+                style={{
+                  background: "var(--bg-1)",
+                  border: "1.5px solid rgba(56, 189, 248, 0.3)",
+                  borderRadius: "var(--r-xl)",
+                  padding: "2rem",
+                  boxShadow: "0 14px 35px rgba(0,0,0,0.08)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1.25rem",
+                  position: "relative",
+                  transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                }}
+              >
+                {/* Card Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        color: "var(--teal)",
+                        background: "var(--teal-light)",
+                        border: "1px solid var(--border-teal)",
+                        padding: "0.25rem 0.65rem",
+                        borderRadius: "var(--r-pill)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                      }}
+                    >
+                      <Sparkles size={11} />
+                      <span>GenLayer Studio Next</span>
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        color: "#38bdf8",
+                        background: "rgba(56, 189, 248, 0.12)",
+                        border: "1px solid rgba(56, 189, 248, 0.25)",
+                        padding: "0.25rem 0.55rem",
+                        borderRadius: "var(--r-pill)",
+                      }}
+                    >
+                      CONSENSUS_REACHED
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-3)", fontFamily: "var(--font-mono)" }}>
+                    Wager: 350 $GEN
+                  </span>
+                </div>
+
+                {/* Market Title */}
+                <h3
+                  onClick={() => {
+                    onSelectMarket?.(bet2Market);
+                    onLaunchApp();
+                  }}
+                  style={{
+                    fontSize: "1.3rem",
+                    fontWeight: 800,
+                    color: "var(--text-0)",
+                    lineHeight: 1.35,
+                    cursor: "pointer",
+                    margin: 0,
+                  }}
+                >
+                  {bet2Market.title}
+                </h3>
+
+                {/* Probabilities Meter */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.45rem" }}>
+                    <span style={{ color: "var(--yes-green)" }}>YES {Math.round(bet2Market.yesPrice * 100)}%</span>
+                    <span style={{ color: "var(--no-red)" }}>NO {Math.round(bet2Market.noPrice * 100)}%</span>
+                  </div>
+                  <div style={{ height: "9px", borderRadius: "var(--r-pill)", background: "var(--no-bg)", overflow: "hidden", display: "flex" }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${Math.round(bet2Market.yesPrice * 100)}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      style={{ background: "var(--yes-green)" }}
+                    />
+                    <div style={{ flex: 1, background: "var(--no-red)" }} />
+                  </div>
+                </div>
+
+                {/* GenLayer AI Consensus Box */}
+                <div
+                  style={{
+                    background: "var(--bg-2)",
+                    border: "1px solid rgba(56, 189, 248, 0.25)",
+                    borderRadius: "12px",
+                    padding: "1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.65rem",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <BrainCircuit size={15} color="var(--teal)" />
+                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--teal)" }}>
+                        GenLayer AI Verdict:
+                      </span>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--yes-green)" }}>
+                        YES (74% Confidence)
+                      </span>
+                    </div>
+
+                    <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-3)" }}>
+                      4/5 Validators Agreed
+                    </span>
+                  </div>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "0.76rem",
+                      color: "var(--text-1)",
+                      fontFamily: "var(--font-mono)",
+                      lineHeight: 1.45,
+                      background: "var(--bg-0)",
+                      padding: "0.6rem 0.75rem",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-0)",
+                    }}
+                  >
+                    "Evaluated Federal Reserve FOMC dot plot projections, PCE inflation prints, and CME FedWatch probabilities via GenVM Python runtime."
+                  </p>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-3)", fontFamily: "var(--font-mono)" }}>
+                    <span>Source: federalreserve.gov</span>
+                    <span style={{ color: "var(--teal)" }}>strict_eq() Verified</span>
+                  </div>
+                </div>
+
+                {/* Interactive Consensus Simulation Sequence */}
+                {bet2SimStep > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    style={{
+                      background: "rgba(56, 189, 248, 0.08)",
+                      border: "1px solid rgba(56, 189, 248, 0.3)",
+                      borderRadius: "10px",
+                      padding: "0.75rem",
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, color: "var(--teal)", marginBottom: "0.4rem" }}>
+                      <RefreshCw size={13} className={bet2Simulating ? "animate-spin" : ""} />
+                      <span>
+                        {bet2SimStep === 1 && "1/3: Fetching Web Ground Truth via gl.nondet.web.render()..."}
+                        {bet2SimStep === 2 && "2/3: Prompting Validator LLMs via gl.nondet.exec_prompt()..."}
+                        {bet2SimStep === 3 && "3/3: Running Equivalence Principle (strict_eq)..."}
+                        {bet2SimStep === 4 && "Consensus Finalized: MAJORITY_AGREE Sealed!"}
+                      </span>
+                    </div>
+                    <div style={{ width: "100%", height: 4, background: "rgba(0,0,0,0.1)", borderRadius: 2, overflow: "hidden" }}>
+                      <motion.div
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${bet2SimStep * 25}%` }}
+                        style={{ height: "100%", background: "linear-gradient(90deg, #38bdf8, #22c55e)" }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Interactive Position Controls & CTA */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
+                    <button
+                      onClick={() => setBet2Side("YES")}
+                      style={{
+                        background: bet2Side === "YES" ? "var(--yes-bg)" : "var(--bg-2)",
+                        border: `1.5px solid ${bet2Side === "YES" ? "var(--yes-border)" : "var(--border-1)"}`,
+                        color: "var(--yes-green)",
+                        borderRadius: "var(--r-md)",
+                        padding: "0.65rem",
+                        fontWeight: 800,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.3rem",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>Position YES {Math.round(bet2Market.yesPrice * 100)}¢</span>
+                    </button>
+                    <button
+                      onClick={() => setBet2Side("NO")}
+                      style={{
+                        background: bet2Side === "NO" ? "var(--no-bg)" : "var(--bg-2)",
+                        border: `1.5px solid ${bet2Side === "NO" ? "var(--no-border)" : "var(--border-1)"}`,
+                        color: "var(--no-red)",
+                        borderRadius: "var(--r-md)",
+                        padding: "0.65rem",
+                        fontWeight: 800,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.3rem",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>Position NO {Math.round(bet2Market.noPrice * 100)}¢</span>
+                    </button>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.6rem" }}>
+                    <button
+                      onClick={runBet2Simulation}
+                      disabled={bet2Simulating}
+                      style={{
+                        flex: 1,
+                        background: "rgba(56, 189, 248, 0.12)",
+                        border: "1.5px solid rgba(56, 189, 248, 0.4)",
+                        color: "var(--teal)",
+                        borderRadius: "var(--r-pill)",
+                        padding: "0.65rem",
+                        fontWeight: 700,
+                        fontSize: "0.82rem",
+                        cursor: bet2Simulating ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      <Cpu size={14} />
+                      <span>{bet2Simulating ? "Running AI..." : "Test AI Consensus"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onSelectMarket?.(bet2Market);
+                        onLaunchApp();
+                      }}
+                      style={{
+                        flex: 1.2,
+                        background: "linear-gradient(135deg, #0284c7, #0d9488)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "var(--r-pill)",
+                        padding: "0.65rem",
+                        fontWeight: 800,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.4rem",
+                        boxShadow: "0 4px 14px rgba(2, 132, 199, 0.35)",
+                      }}
+                    >
+                      <span>Place Bet (Studio Next)</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── Predict Opinions / Newsletter Banner Section (PredGen Style with 4Cast Design System) ─────────────────────────── */}
       <section

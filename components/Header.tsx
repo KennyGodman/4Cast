@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Search, Plus, Trophy, Activity, TrendingUp, Wallet, ChevronDown, LogOut, Copy, Check, Sun, Moon, Droplet, Home } from "lucide-react";
+import { Search, Plus, Trophy, Activity, TrendingUp, Wallet, ChevronDown, LogOut, Copy, Check, Sun, Moon, Droplet, Home, Cpu, ExternalLink, Shield } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalance } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatUnits } from "viem";
 import { LIVE_STATE_REFETCH_INTERVAL } from "@/lib/wagmi";
+import { switchToStudioNext, STUDIO_NEXT_CHAIN_ID, STUDIO_NEXT_EXPLORER_URL } from "@/lib/genlayer";
 
 interface HeaderProps {
   activeTab: string;
@@ -68,8 +69,8 @@ export function Header({
     { id: "home", label: "Home", icon: Home, isHomeBtn: true },
     { id: "markets", label: "Markets", icon: TrendingUp },
     { id: "my-bets", label: "My Bets", icon: Activity },
-    { id: "leaderboard", label: "Leaderboard", icon: Trophy },
-    { id: "faucet", label: "Faucet", icon: Droplet, external: true, url: "https://faucet.circle.com/" },
+    { id: "leaderboard", label: "Leaderboard", icon: Trophy, secondary: true },
+    { id: "faucet", label: "Faucet", icon: Droplet, external: true, url: "https://faucet.circle.com/", secondary: true },
   ];
 
   const [walletOpen, setWalletOpen] = useState(false);
@@ -113,17 +114,7 @@ export function Header({
         transition: "background 0.3s ease, border-color 0.3s ease",
       }}
     >
-      <div
-        style={{
-          maxWidth: "1280px",
-          margin: "0 auto",
-          padding: "0 1.25rem",
-          height: "60px",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.875rem",
-        }}
-      >
+      <div className="header-inner">
         {/* Logo */}
         <button
           onClick={() => {
@@ -165,8 +156,8 @@ export function Header({
             color: "#fff",
             border: "none",
             borderRadius: "var(--r-pill)",
-            padding: "0.45rem 1rem",
-            fontSize: "0.82rem",
+            padding: "0.42rem 0.85rem",
+            fontSize: "0.8rem",
             fontWeight: 600,
             flexShrink: 0,
             boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
@@ -174,20 +165,22 @@ export function Header({
             display: "flex",
             alignItems: "center",
             gap: "0.3rem",
+            whiteSpace: "nowrap",
           }}
         >
           <Plus size={13} />
-          <span className="hide-mobile">Create Market</span>
+          <span className="create-market-text-full">Create Market</span>
+          <span className="create-market-text-short">Create</span>
         </button>
 
         {/* Search Bar */}
-        <div style={{ position: "relative", flex: 1, maxWidth: "360px", margin: "0 auto" }}>
+        <div className="header-search-wrap">
           <Search
             size={14}
             color="var(--text-3)"
             style={{
               position: "absolute",
-              left: "0.875rem",
+              left: "0.75rem",
               top: "50%",
               transform: "translateY(-50%)",
               pointerEvents: "none",
@@ -201,9 +194,11 @@ export function Header({
             onChange={(e) => onSearchChange(e.target.value)}
             className="cyber-input"
             style={{
-              paddingLeft: "2.25rem",
-              fontSize: "0.875rem",
-              height: "36px",
+              paddingLeft: "2.1rem",
+              fontSize: "0.82rem",
+              height: "34px",
+              width: "100%",
+              boxSizing: "border-box",
               background: "var(--bg-2)",
               border: "1.5px solid var(--border-1)",
               color: "var(--text-0)",
@@ -212,16 +207,8 @@ export function Header({
         </div>
 
         {/* Right Tab controls & Wallet */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.25rem",
-            marginLeft: "auto",
-            flexShrink: 0,
-          }}
-        >
-          {navTabs.map(({ id, label, icon: Icon, external, url, isHomeBtn }) => {
+        <div className="header-right-nav">
+          {navTabs.map(({ id, label, icon: Icon, external, url, isHomeBtn, secondary }: any) => {
             const isActive = activeTab === id;
             if (external) {
               return (
@@ -231,23 +218,12 @@ export function Header({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={label}
+                  className={`header-nav-btn ${isActive ? "active" : ""}`}
                   style={{
-                    padding: "0.4rem 0.75rem",
-                    fontSize: "0.82rem",
-                    fontFamily: "var(--font-body)",
-                    fontWeight: 500,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.3rem",
-                    borderRadius: "var(--r-pill)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                    background: "transparent",
                     color: "var(--text-2)",
                     border: "1.5px solid transparent",
-                    outline: "none",
-                    whiteSpace: "nowrap",
-                    textDecoration: "none",
+                    background: "transparent",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "var(--teal-light)";
@@ -258,8 +234,10 @@ export function Header({
                     e.currentTarget.style.color = "var(--text-2)";
                   }}
                 >
-                  <Icon size={13} strokeWidth={2} />
-                  <span className="hide-mobile">{label}</span>
+                  <Icon size={14} strokeWidth={2} />
+                  <span className={`nav-tab-label ${secondary ? "nav-tab-label-secondary" : ""}`}>
+                    {label}
+                  </span>
                 </a>
               );
             }
@@ -267,6 +245,7 @@ export function Header({
               <button
                 key={id}
                 id={`nav-${id}`}
+                title={label}
                 onClick={() => {
                   if (isHomeBtn && onGoHome) {
                     onGoHome();
@@ -274,22 +253,12 @@ export function Header({
                     setActiveTab(id);
                   }
                 }}
+                className={`header-nav-btn ${isActive ? "active" : ""}`}
                 style={{
-                  padding: "0.4rem 0.75rem",
-                  fontSize: "0.82rem",
-                  fontFamily: "var(--font-body)",
                   fontWeight: isActive ? 600 : 500,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.3rem",
-                  borderRadius: "var(--r-pill)",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
                   background: isActive ? "var(--teal-light)" : "transparent",
                   color: isActive ? "var(--teal)" : "var(--text-2)",
                   border: isActive ? "1.5px solid rgba(37,99,235,0.3)" : "1.5px solid transparent",
-                  outline: "none",
-                  whiteSpace: "nowrap",
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
@@ -304,11 +273,48 @@ export function Header({
                   }
                 }}
               >
-                <Icon size={13} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="hide-mobile">{label}</span>
+                <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={`nav-tab-label ${secondary ? "nav-tab-label-secondary" : ""}`}>
+                  {label}
+                </span>
               </button>
             );
           })}
+
+          {/* GenLayer Studio Next Switcher Pill */}
+          <button
+            id="studio-next-pill-btn"
+            onClick={async () => {
+              await switchToStudioNext();
+            }}
+            title="Switch wallet network to GenLayer Studio Next (Chain 61997)"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              padding: "0.32rem 0.65rem",
+              borderRadius: "var(--r-pill)",
+              border: darkMode ? "1.5px solid rgba(168, 85, 247, 0.4)" : "1.5px solid rgba(46, 16, 82, 0.2)",
+              background: darkMode ? "rgba(168, 85, 247, 0.15)" : "rgba(46, 16, 82, 0.06)",
+              color: darkMode ? "#c084fc" : "#6b21a8",
+              fontSize: "0.74rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = darkMode ? "rgba(168, 85, 247, 0.25)" : "rgba(46, 16, 82, 0.12)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = darkMode ? "rgba(168, 85, 247, 0.15)" : "rgba(46, 16, 82, 0.06)";
+            }}
+          >
+            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10b981", display: "inline-block", boxShadow: "0 0 6px #10b981" }} />
+            <span className="studio-pill-text">Studio Next</span>
+            <span className="studio-pill-chain" style={{ fontSize: "0.65rem", opacity: 0.8 }}>(61997)</span>
+          </button>
 
           {/* Dark / Light Mode Toggle */}
           <button
@@ -477,6 +483,66 @@ export function Header({
 
 
 
+                    {/* GenLayer Switch Network in dropdown */}
+                    <button
+                      onClick={async () => {
+                        setWalletOpen(false);
+                        await switchToStudioNext();
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.6rem",
+                        padding: "0.65rem 1rem",
+                        background: "transparent",
+                        border: "none",
+                        borderBottom: "1px solid var(--border-0)",
+                        cursor: "pointer",
+                        fontSize: "0.82rem",
+                        fontFamily: "var(--font-body)",
+                        color: "var(--teal)",
+                        fontWeight: 600,
+                        transition: "background 0.12s",
+                        textAlign: "left",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <Cpu size={14} color="var(--teal)" />
+                      Switch to Studio Next (61997)
+                    </button>
+
+                    {/* Studio Next Explorer */}
+                    <a
+                      href={STUDIO_NEXT_EXPLORER_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.6rem",
+                        padding: "0.65rem 1rem",
+                        background: "transparent",
+                        border: "none",
+                        borderBottom: "1px solid var(--border-0)",
+                        cursor: "pointer",
+                        fontSize: "0.82rem",
+                        fontFamily: "var(--font-body)",
+                        color: "var(--text-1)",
+                        transition: "background 0.12s",
+                        textAlign: "left",
+                        textDecoration: "none",
+                        boxSizing: "border-box",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <ExternalLink size={14} color="var(--text-3)" />
+                      GenLayer Explorer
+                    </a>
+
                     {/* Copy address */}
                     <button
                       id="wallet-copy-address"
@@ -545,12 +611,12 @@ export function Header({
                 onClick={onConnectClick}
                 style={{
                   fontFamily: "var(--font-body)",
-                  fontSize: "0.82rem",
+                  fontSize: "0.8rem",
                   fontWeight: 700,
                   display: "flex",
                   alignItems: "center",
-                  gap: "0.4rem",
-                  padding: "0.45rem 1.1rem",
+                  gap: "0.35rem",
+                  padding: "0.42rem 0.95rem",
                   borderRadius: "var(--r-pill)",
                   cursor: "pointer",
                   transition: "all 0.15s ease",
@@ -559,6 +625,8 @@ export function Header({
                   border: "none",
                   boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
                   outline: "none",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "var(--teal-dim)";

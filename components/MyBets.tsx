@@ -11,6 +11,11 @@ import {
   Check,
   ArrowRight,
   ShieldCheck,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  BrainCircuit,
+  Globe,
 } from "lucide-react";
 import { type Address, formatUnits } from "viem";
 import { MarketAddressProvider } from "@/contexts/MarketAddressContext";
@@ -19,7 +24,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useBalance } from "wagmi";
 import { COLLATERAL_DECIMALS } from "@/lib/contracts/addresses";
 import { type MarketCardData } from "@/lib/markets";
-import { getUserBets, type UserBet } from "@/lib/bets";
+import { getUserBets, type UserBet, type GenLayerPrediction } from "@/lib/bets";
 
 interface MyBetsProps {
   bets: UserBet[];
@@ -366,7 +371,7 @@ function OpenBetRow({ bet, market }: { bet: UserBet; market: MarketCardData | un
             WAGER AMOUNT
           </div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-0)" }}>
-            {bet.amount} USDC
+            {bet.amount} {bet.network === "genlayer" ? "$GEN" : "USDC"}
           </div>
         </div>
 
@@ -375,21 +380,26 @@ function OpenBetRow({ bet, market }: { bet: UserBet; market: MarketCardData | un
             ESTIMATED RETURN
           </div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.95rem", fontWeight: 700, color: "var(--yes-green)" }}>
-            ~{estimatedPayout} USDC
+            ~{estimatedPayout} {bet.network === "genlayer" ? "$GEN" : "USDC"}
           </div>
         </div>
 
         <div>
           <div style={{ fontSize: "0.65rem", color: "var(--text-3)", fontFamily: "var(--font-mono)", marginBottom: "0.15rem" }}>
-            CONTRACT TOKENS
+            NETWORK
           </div>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", fontWeight: 600, color: "var(--text-1)" }}>
-            {formattedBalance ? `${formattedBalance} ${bet.side}` : `${bet.amount} Shares`}
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", fontWeight: 700, color: bet.network === "genlayer" ? "#a855f7" : "var(--teal)" }}>
+            {bet.network === "genlayer" ? "⚡ GenLayer Studio Next" : "🔵 Arc Testnet"}
           </div>
         </div>
       </div>
 
-      {/* Bottom Row: Transaction Hash & ArcScan Explorer Link */}
+      {/* GenLayer AI Consensus Prediction Card */}
+      {bet.genlayerPrediction && (
+        <GenLayerPredictionDisplay prediction={bet.genlayerPrediction} network={bet.network} />
+      )}
+
+      {/* Bottom Row: Transaction Hash & Explorer Link */}
       <div
         style={{
           display: "flex",
@@ -440,12 +450,16 @@ function OpenBetRow({ bet, market }: { bet: UserBet; market: MarketCardData | un
 
         {bet.txHash && (
           <a
-            href={`https://testnet.arcscan.app/tx/${bet.txHash}`}
+            href={
+              bet.network === "genlayer"
+                ? `https://explorer-studio-dev.genlayer.com/address/0x30bAF43D32b86005f7c2E2247E2F395e6b2aEC6f`
+                : `https://testnet.arcscan.app/tx/${bet.txHash}`
+            }
             target="_blank"
             rel="noreferrer"
             style={{
               fontSize: "0.75rem",
-              color: "var(--teal)",
+              color: bet.network === "genlayer" ? "#a855f7" : "var(--teal)",
               textDecoration: "none",
               fontWeight: 700,
               display: "inline-flex",
@@ -453,12 +467,12 @@ function OpenBetRow({ bet, market }: { bet: UserBet; market: MarketCardData | un
               gap: "0.35rem",
               padding: "0.3rem 0.75rem",
               borderRadius: "6px",
-              background: "var(--teal-light)",
-              border: "1px solid var(--border-teal)",
+              background: bet.network === "genlayer" ? "rgba(168,85,247,0.1)" : "var(--teal-light)",
+              border: `1px solid ${bet.network === "genlayer" ? "rgba(168,85,247,0.3)" : "var(--border-teal)"}`,
               transition: "all 0.15s ease",
             }}
           >
-            <span>View on ArcScan Explorer</span>
+            <span>{bet.network === "genlayer" ? "View on GenLayer Explorer" : "View on ArcScan Explorer"}</span>
             <ExternalLink size={12} />
           </a>
         )}
@@ -538,7 +552,7 @@ function SettledBetRow({
               {bet.marketTitle}
             </div>
             <div style={{ fontSize: "0.68rem", color: "var(--text-3)", fontFamily: "var(--font-mono)" }}>
-              Side: <span style={{ fontWeight: 700, color: bet.side === "YES" ? "var(--yes-green)" : "var(--no-red)" }}>{bet.side}</span> · Amount: {bet.amount} USDC
+              Side: <span style={{ fontWeight: 700, color: bet.side === "YES" ? "var(--yes-green)" : "var(--no-red)" }}>{bet.side}</span> · Amount: {bet.amount} {bet.network === "genlayer" ? "$GEN" : "USDC"}
             </div>
           </div>
         </div>
@@ -552,7 +566,7 @@ function SettledBetRow({
               color: won ? "var(--yes-green)" : "var(--text-3)",
             }}
           >
-            {won ? `+${(bet.amount * 2).toFixed(0)} USDC` : `-${bet.amount} USDC`}
+            {won ? `+${(bet.amount * 2).toFixed(0)} ${bet.network === "genlayer" ? "$GEN" : "USDC"}` : `-${bet.amount} ${bet.network === "genlayer" ? "$GEN" : "USDC"}`}
           </span>
 
           {won && (
@@ -595,6 +609,11 @@ function SettledBetRow({
         </div>
       </div>
 
+      {/* GenLayer AI Consensus Prediction Card */}
+      {bet.genlayerPrediction && (
+        <GenLayerPredictionDisplay prediction={bet.genlayerPrediction} network={bet.network} />
+      )}
+
       {/* Explorer strip for settled bet */}
       <div
         style={{
@@ -634,12 +653,16 @@ function SettledBetRow({
 
         {bet.txHash && (
           <a
-            href={`https://testnet.arcscan.app/tx/${bet.txHash}`}
+            href={
+              bet.network === "genlayer"
+                ? `https://explorer-studio-dev.genlayer.com/address/0x30bAF43D32b86005f7c2E2247E2F395e6b2aEC6f`
+                : `https://testnet.arcscan.app/tx/${bet.txHash}`
+            }
             target="_blank"
             rel="noreferrer"
             style={{
               fontSize: "0.72rem",
-              color: "var(--teal)",
+              color: bet.network === "genlayer" ? "#a855f7" : "var(--teal)",
               textDecoration: "none",
               fontWeight: 700,
               display: "inline-flex",
@@ -647,11 +670,158 @@ function SettledBetRow({
               gap: "0.3rem",
             }}
           >
-            <span>ArcScan Explorer</span>
+            <span>{bet.network === "genlayer" ? "GenLayer Explorer" : "ArcScan Explorer"}</span>
             <ExternalLink size={11} />
           </a>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * High-tech GenLayer AI Consensus Prediction visualization component for user bets
+ */
+function GenLayerPredictionDisplay({
+  prediction,
+  network,
+}: {
+  prediction: GenLayerPrediction;
+  network?: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div
+      style={{
+        background: "linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(56,189,248,0.04) 100%)",
+        border: "1px solid rgba(168,85,247,0.22)",
+        borderRadius: "10px",
+        padding: "0.75rem 1rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.6rem",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.3rem",
+              background: "linear-gradient(90deg, #9333ea, #6366f1)",
+              color: "#ffffff",
+              fontSize: "0.68rem",
+              fontWeight: 800,
+              padding: "0.2rem 0.55rem",
+              borderRadius: "var(--r-pill)",
+              letterSpacing: "0.02em",
+              boxShadow: "0 2px 8px rgba(147,51,234,0.3)",
+            }}
+          >
+            <Sparkles size={11} />
+            <span>GenLayer AI Consensus</span>
+          </span>
+
+          <span
+            style={{
+              fontSize: "0.68rem",
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-2)",
+              fontWeight: 600,
+            }}
+          >
+            {prediction.validatorsAgreed}/{prediction.totalValidators} Validators Agreed
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <span
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 800,
+              fontFamily: "var(--font-mono)",
+              color: prediction.predictedOutcome === "YES" ? "var(--yes-green)" : "var(--no-red)",
+            }}
+          >
+            Predicted: {prediction.predictedOutcome} ({prediction.confidence}%)
+          </span>
+
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              background: "rgba(168,85,247,0.12)",
+              border: "1px solid rgba(168,85,247,0.3)",
+              color: "#a855f7",
+              cursor: "pointer",
+              borderRadius: "6px",
+              padding: "0.2rem 0.45rem",
+              fontSize: "0.68rem",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.25rem",
+              fontWeight: 700,
+            }}
+          >
+            <span>{expanded ? "Hide Reasoning" : "View AI Reasoning"}</span>
+            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Confidence Meter Bar */}
+      <div style={{ width: "100%", height: 5, borderRadius: 3, background: "rgba(0,0,0,0.1)", overflow: "hidden" }}>
+        <div
+          style={{
+            width: `${prediction.confidence}%`,
+            height: "100%",
+            borderRadius: 3,
+            background: "linear-gradient(90deg, #a855f7, #38bdf8)",
+            transition: "width 0.4s ease",
+          }}
+        />
+      </div>
+
+      {/* Expandable AI Ground Truth & LLM Transcript Drawer */}
+      {expanded && (
+        <div
+          style={{
+            background: "var(--bg-0)",
+            border: "1px solid rgba(168,85,247,0.18)",
+            borderRadius: "8px",
+            padding: "0.75rem",
+            marginTop: "0.25rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            fontSize: "0.75rem",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#a855f7", fontWeight: 700 }}>
+            <BrainCircuit size={14} />
+            <span>GenVM Validator LLM Evaluation (`gl.nondet.exec_prompt`):</span>
+          </div>
+
+          <p style={{ margin: 0, color: "var(--text-1)", lineHeight: 1.5, fontFamily: "var(--font-mono)", fontSize: "0.72rem" }}>
+            "{prediction.aiReasoning}"
+          </p>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", paddingTop: "0.4rem", borderTop: "1px solid var(--border-0)" }}>
+            {prediction.webGroundTruthSource && (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--text-3)", fontSize: "0.68rem", fontFamily: "var(--font-mono)" }}>
+                <Globe size={12} />
+                <span>Web Ground Truth:</span>
+                <span style={{ color: "var(--teal)" }}>{prediction.webGroundTruthSource}</span>
+              </div>
+            )}
+
+            <div style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-3)" }}>
+              Equivalence: <span style={{ color: "var(--yes-green)", fontWeight: 700 }}>strict_eq() Finalized</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

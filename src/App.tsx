@@ -11,7 +11,7 @@ import { MarketDetailModal } from "@/components/MarketDetailModal";
 import { AppLoadingScreen } from "@/components/AppLoadingScreen";
 import { MARKETS, type MarketCardData, type DynamicMarket, dynamicToCardData } from "@/lib/markets";
 import { useWallet } from "@/contexts/WalletContext";
-import { getUserBets, saveUserBet, updateUserBet, generateTxHash, type UserBet } from "@/lib/bets";
+import { getUserBets, saveUserBet, updateUserBet, generateTxHash, generateGenLayerPrediction, type UserBet } from "@/lib/bets";
 
 export default function App() {
   const { address } = useWallet();
@@ -114,6 +114,8 @@ export default function App() {
       placedAt: new Date().toISOString(),
       status: "open",
       claimed: false,
+      network: "genlayer",
+      genlayerPrediction: generateGenLayerPrediction(market.title, side),
     };
 
     saveUserBet(newBet);

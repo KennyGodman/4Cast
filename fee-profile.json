@@ -1,0 +1,52 @@
+{
+  "version": "0.6.0",
+  "network": "studio-dev",
+  "chainId": 61997,
+  "contract": "PredictionMarket",
+  "defaults": {
+    "rotationsPerRound": 1,
+    "appealRounds": 3
+  },
+  "methods": {
+    "deploy": {
+      "timeUnits": 45000,
+      "executionGas": 4800000,
+      "storageBytes": 32768,
+      "rotationsPerRound": 1,
+      "appealRounds": 3,
+      "description": "Deploy PredictionMarket Intelligent Contract on Studio Next"
+    },
+    "create_market": {
+      "timeUnits": 12000,
+      "executionGas": 850000,
+      "storageBytes": 4096,
+      "rotationsPerRound": 1,
+      "appealRounds": 3,
+      "description": "Initialize a new binary prediction market with criteria and metadata"
+    },
+    "place_bet": {
+      "timeUnits": 8000,
+      "executionGas": 450000,
+      "storageBytes": 1024,
+      "rotationsPerRound": 1,
+      "appealRounds": 3,
+      "description": "Stake native $GEN on YES or NO outcome with pool update"
+    },
+    "resolve_market": {
+      "timeUnits": 65000,
+      "executionGas": 3200000,
+      "storageBytes": 4096,
+      "rotationsPerRound": 2,
+      "appealRounds": 5,
+      "description": "Autonomous resolution with gl.nondet.web.render and gl.nondet.exec_prompt under strict consensus"
+    },
+    "claim_payout": {
+      "timeUnits": 9000,
+      "executionGas": 420000,
+      "storageBytes": 512,
+      "rotationsPerRound": 1,
+      "appealRounds": 3,
+      "description": "Claim proportional winning stake in native $GEN"
+    }
+  }
+}

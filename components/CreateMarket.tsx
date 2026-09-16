@@ -3,6 +3,12 @@ import { Plus, Calendar, AlignLeft, Tag, Eye, Info, Loader2 } from "lucide-react
 
 const RESOLUTION_TEMPLATES = [
   {
+    label: "GenLayer AI Consensus",
+    title: "Will GenLayer Mainnet launch before Q4 2026?",
+    description: "Resolves automatically via GenLayer LLM multi-validator consensus by rendering https://genlayer.com with gl.nondet.web.render() and strict equivalence.",
+    source: "https://genlayer.com",
+  },
+  {
     label: "Price Target",
     title: "Will [ASSET] exceed $[PRICE] before [DATE]?",
     description: "Resolves YES if the [ASSET] spot price reaches or exceeds $[PRICE] at any point before [DATE].",
@@ -22,7 +28,7 @@ const RESOLUTION_TEMPLATES = [
   },
 ];
 
-const CATEGORIES = ["Crypto", "Economy", "Equities", "Commodities", "Geopolitics"];
+const CATEGORIES = ["Crypto", "GenLayer Ecosystem", "Economy", "Equities", "Commodities", "Geopolitics"];
 
 interface CreateMarketProps {
   onCreateMarket: (market: any) => void;
