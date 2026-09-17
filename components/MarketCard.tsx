@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Clock, Share2, Droplets, Zap } from "lucide-react";
-import { type MarketCardData } from "@/lib/markets";
+import { Clock, Share2, Droplets, Zap, CheckCircle2 } from "lucide-react";
+import { type MarketCardData, getMarketVolume } from "@/lib/markets";
+import { getUserBets } from "@/lib/bets";
 import { useMarketCardData } from "@/hooks/useMarket";
 import { type Address } from "viem";
 import { BetConfirmModal } from "./BetConfirmModal";
@@ -42,6 +43,20 @@ export function MarketCard({
 }: MarketCardProps) {
   const [pendingSide, setPendingSide] = useState<"YES" | "NO" | null>(null);
 
+  // Track user bets reactively so market volume increments immediately when bet lands
+  const [userBets, setUserBets] = useState(() => getUserBets());
+  useEffect(() => {
+    const handleBetsUpdate = () => {
+      setUserBets(getUserBets());
+    };
+    window.addEventListener("4cast_bets_updated", handleBetsUpdate);
+    window.addEventListener("storage", handleBetsUpdate);
+    return () => {
+      window.removeEventListener("4cast_bets_updated", handleBetsUpdate);
+      window.removeEventListener("storage", handleBetsUpdate);
+    };
+  }, []);
+
   // Load live contract state if it's a real on-chain market
   const { status, volume, settlementOutcome, ammYesPrice, isLoading } = useMarketCardData(
     market.address as Address,
@@ -50,7 +65,7 @@ export function MarketCard({
   );
 
   const isReal = !!market.isReal;
-  const isSettled = isReal && status === "Settled";
+  const isSettled = (isReal && status === "Settled") || !!market.resolved;
   const hasAmmPrice = isReal && ammYesPrice !== undefined;
 
   // Use dynamic AMM price for real markets, static price for demos
@@ -60,11 +75,10 @@ export function MarketCard({
     ? Math.round(market.yesPrice * 100)
     : null;
 
-  const displayVolume = isReal
-    ? hasAmmPrice
-      ? (volume ?? "0.00 USDC")
-      : "0.00 USDC"
-    : market.volume;
+  // Dynamic volume calculation that never stays stuck at 0.00 USDC
+  const displayVolume = hasAmmPrice && volume
+    ? volume
+    : getMarketVolume(market, userBets);
 
   const handleBet = (e: React.MouseEvent, side: "YES" | "NO") => {
     e.stopPropagation();
@@ -235,7 +249,7 @@ export function MarketCard({
                     border: "1px solid var(--border-0)",
                   }}
                 >
-                  {settlementOutcome ? `✓ Resolved ${settlementOutcome}` : "Resolved"}
+                  {settlementOutcome || market.outcome ? `✓ Resolved ${settlementOutcome || market.outcome}` : "Resolved"}
                 </span>
               )}
               {hasAmmPrice && !isSettled && (

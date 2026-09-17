@@ -28,7 +28,7 @@ const RESOLUTION_TEMPLATES = [
   },
 ];
 
-const CATEGORIES = ["Crypto", "GenLayer Ecosystem", "Economy", "Equities", "Commodities", "Geopolitics"];
+const CATEGORIES = ["Crypto", "Sports", "GenLayer Ecosystem", "Economy", "Equities", "Commodities", "Geopolitics"];
 
 interface CreateMarketProps {
   onCreateMarket: (market: any) => void;

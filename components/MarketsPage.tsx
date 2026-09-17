@@ -18,7 +18,7 @@ const STATUS_FILTERS = [
   { value: "resolved", label: "Resolved" },
 ];
 
-const CATEGORIES = ["Arc Network", "Crypto", "Economy", "Equities", "Commodities", "Geopolitics"];
+const CATEGORIES = ["Arc Network", "Crypto", "Sports", "Economy", "Equities", "Commodities", "Geopolitics"];
 
 interface MarketsPageProps {
   markets: MarketCardData[];
@@ -63,8 +63,10 @@ export function MarketsPage({
 
     if (status !== "all") {
       result = result.filter((m) => {
-        const mStatus = m.isReal ? "open" : "open";
-        return mStatus === status;
+        const isResolved = !!m.resolved || m.settlementOutcome !== undefined;
+        if (status === "resolved") return isResolved;
+        if (status === "open") return !isResolved;
+        return true;
       });
     }
 

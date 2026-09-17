@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Minus, Plus, ArrowRight, ExternalLink } from "lucide-react";
+import { X, Minus, Plus, ArrowRight, ExternalLink, Sparkles, Shield, Cpu } from "lucide-react";
 import { parseUnits, formatUnits, type Address } from "viem";
 import { useWallet } from "@/contexts/WalletContext";
 import { MarketAddressProvider, useMarketAddress } from "@/contexts/MarketAddressContext";
@@ -26,10 +26,18 @@ interface BetConfirmModalProps {
     yesPrice: number;
     noPrice: number;
     isReal?: boolean;
+    volume?: string;
   };
   initialSide?: "YES" | "NO";
   onClose: () => void;
-  onPlaceBet?: (marketId: string, side: "YES" | "NO", amount: number, txHash?: string) => Promise<string | undefined>;
+  onPlaceBet?: (
+    marketId: string,
+    side: "YES" | "NO",
+    amount: number,
+    txHash?: string,
+    network?: "arc" | "genlayer",
+    currency?: "USDC" | "GEN"
+  ) => Promise<string | undefined>;
 }
 
 export function BetConfirmModal({ market, initialSide = "YES", onClose, onPlaceBet }: BetConfirmModalProps) {
@@ -60,12 +68,14 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   const { address, isConnected, connectMetaMask } = useWallet();
   const { ammAddress } = useMarketAddress();
   const [side, setSide] = useState<"YES" | "NO">(initialSide);
+  const [selectedCurrency, setSelectedCurrency] = useState<"USDC" | "GEN">("USDC");
   const [amount, setAmount] = useState(50);
   const [inputVal, setInputVal] = useState("50");
   const [placed, setPlaced] = useState(false);
   const [placedTx, setPlacedTx] = useState("");
   const [showGenLayerModal, setShowGenLayerModal] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const processedHashesRef = useRef<Set<string>>(new Set());
 
   const handleOpenGenLayerModal = async () => {
     const eth = typeof window !== "undefined" ? (window as any).ethereum : null;
@@ -86,7 +96,6 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   // AMM state & calculations
   const { yesPrice, noPrice, isLoading: isAmmLoading } = useAMMState();
 
-  // If AMM isn't initialized or ready, fall back to static market prices (converted to 0-100 scale)
   const currentYesPrice = yesPrice !== undefined ? yesPrice : market.yesPrice * 100;
   const currentNoPrice = noPrice !== undefined ? noPrice : market.noPrice * 100;
 
@@ -101,19 +110,19 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   const payout = tokensOut !== undefined
     ? parseFloat(formatUnits(tokensOut, COLLATERAL_DECIMALS)).toFixed(2)
     : amount > 0
-    ? (amount / selectedProb).toFixed(2)
+    ? (amount / (selectedProb || 0.5)).toFixed(2)
     : "0.00";
 
-  const multiplier = selectedProb > 0 ? (1 / selectedProb).toFixed(2) : "0.00";
+  const multiplier = selectedProb > 0 ? (1 / selectedProb).toFixed(2) : "2.00";
 
   // Allowances & approvals
   const { arctAllowance, isLoading: isAllowancesLoading } = useAMMAllowances(
-    "0x0000000000000000000000000000000000000001", // dummy address for tokens since we only check ARCT allowance here
+    "0x0000000000000000000000000000000000000001",
     "0x0000000000000000000000000000000000000002"
   );
   
   const amountBigInt = parseUnits(amount.toString(), COLLATERAL_DECIMALS);
-  const needsApproval = isConnected && arctAllowance !== undefined && arctAllowance < amountBigInt;
+  const needsApproval = isConnected && selectedCurrency === "USDC" && arctAllowance !== undefined && arctAllowance < amountBigInt;
 
   const approveHook = useApproveArctForAMM();
   const buyYesHook = useBuyYes();
@@ -128,13 +137,17 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
     return () => document.removeEventListener("keydown", fn);
   }, [onClose]);
 
-  // Success transaction updates from real on-chain transaction
+  // Success transaction updates from real on-chain transaction (strictly deduplicated)
   const activeHook = side === "YES" ? buyYesHook : buyNoHook;
   useEffect(() => {
     if (activeHook.isSuccess && activeHook.hash) {
       const realTx = activeHook.hash;
+      if (processedHashesRef.current.has(realTx)) return;
+      processedHashesRef.current.add(realTx);
+
+      const betId = `bet-${realTx.slice(2, 12)}`;
       const newBet: UserBet = {
-        id: `bet-${Date.now()}`,
+        id: betId,
         txHash: realTx,
         marketId: market.id,
         marketTitle: market.title,
@@ -143,11 +156,13 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
         placedAt: new Date().toISOString(),
         status: "open",
         claimed: false,
+        network: selectedCurrency === "GEN" ? "genlayer" : "arc",
+        currency: selectedCurrency,
       };
 
       saveUserBet(newBet);
       if (onPlaceBet) {
-        onPlaceBet(market.id, side, amount, realTx);
+        onPlaceBet(market.id, side, amount, realTx, selectedCurrency === "GEN" ? "genlayer" : "arc", selectedCurrency);
       }
 
       setPlacedTx(realTx);
@@ -159,7 +174,7 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [activeHook.isSuccess, activeHook.hash, onClose, side, amount, market.id, market.title, onPlaceBet]);
+  }, [activeHook.isSuccess, activeHook.hash, side, amount, market.id, market.title, onPlaceBet, selectedCurrency, onClose]);
 
   const setAmt = (v: number) => {
     const n = Math.max(0.01, Math.min(10000, v));
@@ -176,8 +191,8 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   const handleInputBlur = () => {
     const n = parseFloat(inputVal);
     if (isNaN(n) || n <= 0) {
-      setAmount(0.1);
-      setInputVal("0.1");
+      setAmount(10);
+      setInputVal("10");
     } else {
       setAmt(n);
     }
@@ -189,6 +204,12 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   const handleAction = async () => {
     if (amount <= 0) return;
     setTxError(null);
+
+    // If $GEN is selected, open the GenLayer Transaction Panel
+    if (selectedCurrency === "GEN") {
+      await handleOpenGenLayerModal();
+      return;
+    }
 
     const isUnconfigured = (addr?: string) =>
       !addr ||
@@ -220,11 +241,9 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             ? market.address
             : "0x7a250d5630b4cf539739df2c5dacb4c659f2488d";
 
-        // Calculate exact hex value in wei for native USDC (18 decimals on Arc Testnet)
         const amountWei = parseUnits(amount.toString(), COLLATERAL_DECIMALS);
         const hexValue = "0x" + amountWei.toString(16);
 
-        // Prompt Rabby / EVM wallet for on-chain Arc Testnet transaction with bet value
         const txHash = await eth.request({
           method: "eth_sendTransaction",
           params: [
@@ -232,14 +251,18 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
               from: address,
               to: targetAddress,
               value: hexValue,
-              data: "0x3863617374", // "4cast" hex identifier
+              data: "0x3863617374",
             },
           ],
         });
 
         if (txHash) {
+          if (processedHashesRef.current.has(txHash)) return;
+          processedHashesRef.current.add(txHash);
+
+          const betId = `bet-${txHash.slice(2, 12)}`;
           const newBet: UserBet = {
-            id: `bet-${Date.now()}`,
+            id: betId,
             txHash,
             marketId: market.id,
             marketTitle: market.title,
@@ -248,11 +271,13 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             placedAt: new Date().toISOString(),
             status: "open",
             claimed: false,
+            network: "arc",
+            currency: "USDC",
           };
 
           saveUserBet(newBet);
           if (onPlaceBet) {
-            onPlaceBet(market.id, side, amount, txHash);
+            onPlaceBet(market.id, side, amount, txHash, "arc", "USDC");
           }
 
           setPlacedTx(txHash);
@@ -273,11 +298,14 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
       }
     }
 
-    // 3. Fallback for non-connected demo mode
+    // 3. Fallback for non-connected demo mode (strictly deduplicated)
     const mockHash = generateTxHash();
+    if (processedHashesRef.current.has(mockHash)) return;
+    processedHashesRef.current.add(mockHash);
 
+    const betId = `bet-${mockHash.slice(2, 12)}`;
     const newBet: UserBet = {
-      id: `bet-${Date.now()}`,
+      id: betId,
       txHash: mockHash,
       marketId: market.id,
       marketTitle: market.title,
@@ -286,11 +314,13 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
       placedAt: new Date().toISOString(),
       status: "open",
       claimed: false,
+      network: "arc",
+      currency: "USDC",
     };
 
     saveUserBet(newBet);
     if (onPlaceBet) {
-      onPlaceBet(market.id, side, amount, mockHash);
+      onPlaceBet(market.id, side, amount, mockHash, "arc", "USDC");
     }
 
     setPlacedTx(mockHash);
@@ -303,7 +333,9 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
   };
 
   const isPending = approveHook.isPending || approveHook.isConfirming || activeHook.isPending || activeHook.isConfirming || isSubmitting;
-  const error = approveHook.error || activeHook.error;
+  const error = approveHook.error || buyYesHook.error || buyNoHook.error;
+
+  const currentProb = Math.round(selectedProb * 100);
 
   return (
     <div
@@ -314,9 +346,9 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(6,7,18,0.6)",
+        background: "rgba(6, 7, 18, 0.7)",
         backdropFilter: "blur(6px)",
-        zIndex: 600,
+        zIndex: 1000,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -327,7 +359,7 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
       <div
         style={{
           width: "100%",
-          maxWidth: "400px",
+          maxWidth: "420px",
           background: "#ffffff",
           borderRadius: "20px",
           boxShadow: "0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12)",
@@ -345,7 +377,6 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             gap: "0.75rem",
           }}
         >
-          {/* Market thumbnail */}
           <div
             style={{
               width: 40,
@@ -364,8 +395,8 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontSize: "0.78rem",
-                fontWeight: 600,
+                fontSize: "0.82rem",
+                fontWeight: 700,
                 color: "#111827",
                 lineHeight: 1.35,
                 display: "-webkit-box",
@@ -375,6 +406,9 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
               }}
             >
               {market.title}
+            </div>
+            <div style={{ fontSize: "0.68rem", color: "#6b7280", marginTop: "2px" }}>
+              Category: <span style={{ fontWeight: 600 }}>{market.category}</span>
             </div>
           </div>
           <button
@@ -405,56 +439,121 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
             gap: "1rem",
           }}
         >
-          {/* Buying label */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "0.8rem", color: "#6b7280", fontWeight: 500 }}>
-              Buying:
+          {/* Dual Currency & Network Selector Pill */}
+          <div>
+            <div style={{ fontSize: "0.72rem", color: "#6b7280", fontWeight: 600, marginBottom: "0.35rem" }}>
+              PREDICTION CURRENCY & NETWORK
+            </div>
+            <div
+              style={{
+                display: "flex",
+                background: "#f3f4f6",
+                borderRadius: "10px",
+                padding: "3px",
+                gap: "3px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedCurrency("USDC")}
+                style={{
+                  flex: 1,
+                  padding: "0.45rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  background: selectedCurrency === "USDC" ? "#ffffff" : "transparent",
+                  color: selectedCurrency === "USDC" ? "#2563eb" : "#6b7280",
+                  boxShadow: selectedCurrency === "USDC" ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.35rem",
+                }}
+              >
+                <span>🔵</span>
+                <span>Arc USDC</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedCurrency("GEN")}
+                style={{
+                  flex: 1,
+                  padding: "0.45rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  background: selectedCurrency === "GEN" ? "#ffffff" : "transparent",
+                  color: selectedCurrency === "GEN" ? "#9333ea" : "#6b7280",
+                  boxShadow: selectedCurrency === "GEN" ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.35rem",
+                }}
+              >
+                <span>⚡</span>
+                <span>GenLayer $GEN</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Buying side selector */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "0.8rem", color: "#6b7280", fontWeight: 600 }}>
+              Position:
             </span>
-            {/* YES / NO toggle */}
             <div style={{ display: "flex", gap: "0.375rem" }}>
               {(["YES", "NO"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setSide(s)}
                   style={{
-                    padding: "0.3rem 0.95rem",
-                    borderRadius: "999px",
-                    fontSize: "0.8rem",
-                    fontWeight: 700,
+                    padding: "0.35rem 1rem",
+                    borderRadius: "8px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
                     cursor: "pointer",
-                    transition: "all 0.18s ease",
-                    ...(side === s
-                      ? {
-                          background: "var(--teal)",
-                          color: "#ffffff",
-                          border: "1.5px solid var(--teal)",
-                          boxShadow: "0 2px 10px rgba(46,16,82,0.3)",
-                        }
-                      : {
-                          background: "var(--teal-light)",
-                          color: "var(--teal)",
-                          border: "1.5px solid var(--border-teal)",
-                        }),
+                    transition: "all 0.15s ease",
+                    border: side === s
+                      ? s === "YES"
+                        ? "1.5px solid #16a34a"
+                        : "1.5px solid #dc2626"
+                      : "1.5px solid #e5e7eb",
+                    background: side === s
+                      ? s === "YES"
+                        ? "#dcfce7"
+                        : "#fee2e2"
+                      : "#ffffff",
+                    color: side === s
+                      ? s === "YES"
+                        ? "#15803d"
+                        : "#b91c1c"
+                      : "#6b7280",
                   }}
                 >
-                  {s}
+                  {s === "YES" ? "📈 YES" : "📉 NO"}
                 </button>
               ))}
             </div>
-            <div
-              style={{
-                marginLeft: "auto",
-                fontSize: "0.72rem",
-                color: "#9ca3af",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              {Math.round(selectedProb * 100)}% chance
-            </div>
           </div>
 
-          {/* Amount section */}
-          <div>
+          {/* Amount input block */}
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1.5px solid #e5e7eb",
+              borderRadius: "14px",
+              padding: "0.875rem 1rem",
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -463,270 +562,223 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
                 marginBottom: "0.5rem",
               }}
             >
-              <span style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>
-                Amount
+              <span style={{ fontSize: "0.72rem", color: "#6b7280", fontWeight: 600 }}>
+                AMOUNT ({selectedCurrency})
               </span>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "#9ca3af" }}>
-                  USDC
-                </span>
+              <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
+                Odds: <strong style={{ color: "#111827" }}>{currentProb}%</strong>
+              </span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <button
+                type="button"
+                onClick={() => setAmt(amount - 10)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "8px",
+                  border: "1px solid #d1d5db",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#374151",
+                  flexShrink: 0,
+                }}
+              >
+                <Minus size={14} />
+              </button>
+
+              <div style={{ flex: 1, position: "relative" }}>
                 <input
+                  id="bet-amount-input"
                   type="number"
                   min="0.01"
-                  step="0.01"
                   max="10000"
+                  step="any"
                   value={inputVal}
                   onChange={handleInputChange}
                   onBlur={handleInputBlur}
                   style={{
-                    width: "80px",
-                    textAlign: "right",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    padding: "0.25rem 0.5rem",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.9rem",
-                    fontWeight: 700,
+                    width: "100%",
+                    fontSize: "1.4rem",
+                    fontWeight: 800,
                     color: "#111827",
+                    background: "transparent",
+                    border: "none",
                     outline: "none",
-                    background: "#f9fafb",
+                    textAlign: "center",
+                    fontFamily: "var(--font-display)",
+                    boxSizing: "border-box",
                   }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--teal)")}
-                  onBlurCapture={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
                 />
               </div>
-            </div>
 
-            {/* Slider row */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <button
-                onClick={() => setAmt(Math.max(0.01, amount - 10))}
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  background: "#f3f4f6",
-                  border: "1px solid #e5e7eb",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#6b7280",
-                  flexShrink: 0,
-                  transition: "all 0.12s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#e5e7eb";
-                  e.currentTarget.style.color = "#111827";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#f3f4f6";
-                  e.currentTarget.style.color = "#6b7280";
-                }}
-              >
-                <Minus size={12} />
-              </button>
-              <input
-                type="range"
-                min="1"
-                max="1000"
-                step="1"
-                value={Math.min(1000, amount)}
-                onChange={(e) => setAmt(Number(e.target.value))}
-                style={{
-                  flex: 1,
-                  accentColor: "var(--teal)",
-                  height: "4px",
-                  cursor: "pointer",
-                }}
-              />
-              <button
+                type="button"
                 onClick={() => setAmt(amount + 10)}
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  background: "#f3f4f6",
-                  border: "1px solid #e5e7eb",
+                  width: 32,
+                  height: 32,
+                  borderRadius: "8px",
+                  border: "1px solid #d1d5db",
+                  background: "#ffffff",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#6b7280",
+                  color: "#374151",
                   flexShrink: 0,
-                  transition: "all 0.12s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#e5e7eb";
-                  e.currentTarget.style.color = "#111827";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#f3f4f6";
-                  e.currentTarget.style.color = "#6b7280";
                 }}
               >
-                <Plus size={12} />
+                <Plus size={14} />
               </button>
             </div>
 
-            {/* Quick preset chips */}
-            <div style={{ display: "flex", gap: "0.35rem", marginTop: "0.6rem" }}>
-              {PRESETS.map((v) => (
+            {/* Quick Presets */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.375rem",
+                marginTop: "0.75rem",
+                paddingTop: "0.625rem",
+                borderTop: "1px solid #e5e7eb",
+              }}
+            >
+              {PRESETS.map((p) => (
                 <button
-                  key={v}
-                  onClick={() => setAmt(v)}
+                  key={p}
+                  type="button"
+                  onClick={() => setAmt(p)}
                   style={{
                     flex: 1,
-                    padding: "0.3rem",
-                    fontSize: "0.72rem",
-                    fontFamily: "var(--font-mono)",
+                    padding: "0.25rem 0",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
                     borderRadius: "6px",
+                    border: amount === p ? "1px solid #2563eb" : "1px solid #e5e7eb",
+                    background: amount === p ? "#eff6ff" : "#ffffff",
+                    color: amount === p ? "#2563eb" : "#4b5563",
                     cursor: "pointer",
-                    transition: "all 0.12s",
-                    border: amount === v ? "1.5px solid var(--teal)" : "1.5px solid #e5e7eb",
-                    background: amount === v ? "var(--teal)" : "#f9fafb",
-                    color: amount === v ? "#ffffff" : "#6b7280",
-                    fontWeight: 600,
-                    outline: "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (amount !== v) {
-                      e.currentTarget.style.background = "var(--teal-light)";
-                      e.currentTarget.style.borderColor = "var(--border-teal)";
-                      e.currentTarget.style.color = "var(--teal)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (amount !== v) {
-                      e.currentTarget.style.background = "#f9fafb";
-                      e.currentTarget.style.borderColor = "#e5e7eb";
-                      e.currentTarget.style.color = "#6b7280";
-                    }
+                    fontFamily: "var(--font-mono)",
+                    transition: "all 0.12s ease",
                   }}
                 >
-                  {v}
+                  +{p}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Payout preview */}
+          {/* Payout preview strip */}
           <div
             style={{
               background: "#f9fafb",
-              border: "1px solid #e5e7eb",
               borderRadius: "12px",
-              padding: "0.875rem 1rem",
+              padding: "0.75rem 1rem",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: "0.78rem",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "0.65rem", color: "#9ca3af", fontWeight: 500, marginBottom: "0.2rem" }}>
-                  You put
-                </div>
-                <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "1rem", color: "#111827" }}>
-                  {amount} USDC
-                </div>
+            <div>
+              <div style={{ color: "#6b7280", fontSize: "0.7rem" }}>Est. Return</div>
+              <div
+                style={{
+                  fontSize: "1.1rem",
+                  fontWeight: 800,
+                  color: "#16a34a",
+                  fontFamily: "var(--font-display)",
+                }}
+              >
+                ~{payout} {selectedCurrency}
               </div>
-              <ArrowRight size={16} color="#9ca3af" />
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "0.65rem", color: "#9ca3af", fontWeight: 500, marginBottom: "0.2rem" }}>
-                  You receive
-                </div>
-                <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "1rem", color: "#16a34a" }}>
-                  {payout} {side === "YES" ? "YES" : "NO"}
-                  <span style={{ fontSize: "0.68rem", color: "#16a34a", opacity: 0.75, marginLeft: "0.3rem" }}>
-                    ({multiplier}x)
-                  </span>
-                </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ color: "#6b7280", fontSize: "0.7rem" }}>Multiplier</div>
+              <div
+                style={{
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  color: "#374151",
+                  fontFamily: "var(--font-mono)",
+                }}
+              >
+                {multiplier}x
               </div>
             </div>
           </div>
 
-          {/* CTA Button */}
-          {placed ? (
+          {/* Success state */}
+          {placed && (
             <div
               style={{
+                background: "#f0fdf4",
+                border: "1px solid #86efac",
+                borderRadius: "10px",
+                padding: "0.75rem",
                 textAlign: "center",
-                padding: "1rem",
-                background: "rgba(22,163,74,0.08)",
-                border: "1.5px solid rgba(22,163,74,0.35)",
-                borderRadius: "14px",
-                color: "#16a34a",
-                fontWeight: 700,
-                fontSize: "0.95rem",
-                animation: "fadeIn 0.2s ease",
+                color: "#15803d",
+                fontSize: "0.82rem",
+                fontWeight: 600,
                 display: "flex",
                 flexDirection: "column",
-                gap: "0.5rem",
+                gap: "0.25rem",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", fontSize: "1rem" }}>
-                <span>✓</span> Bet Placed Successfully!
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#4b5563", fontWeight: 500 }}>
-                Position added to your <strong>My Bets</strong> portfolio.
-              </div>
+              <span>🎉 Bet successfully confirmed!</span>
+              <span style={{ fontSize: "0.7rem", color: "#166534" }}>
+                Recorded {amount} {selectedCurrency} on {selectedCurrency === "GEN" ? "GenLayer Studio Next" : "Arc Testnet"}.
+              </span>
               {placedTx && (
-                <div
+                <a
+                  href={
+                    selectedCurrency === "GEN"
+                      ? `${STUDIO_NEXT_EXPLORER_URL}/address/${GENLAYER_PREDICTION_MARKET_ADDRESS}`
+                      : `https://testnet.arcscan.app/tx/${placedTx}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
                   style={{
-                    marginTop: "0.25rem",
-                    padding: "0.5rem 0.75rem",
-                    background: "rgba(0,0,0,0.04)",
-                    borderRadius: "8px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.3rem",
+                    color: "#2563eb",
+                    fontSize: "0.7rem",
+                    display: "inline-flex",
                     alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.2rem",
+                    marginTop: "0.2rem",
                   }}
                 >
-                  <span style={{ fontSize: "0.68rem", color: "#6b7280", fontFamily: "var(--font-mono)" }}>
-                    TX Hash: {placedTx.slice(0, 10)}...{placedTx.slice(-8)}
-                  </span>
-                  <a
-                    href={`https://testnet.arcscan.app/tx/${placedTx}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "var(--teal)",
-                      fontWeight: 700,
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.3rem",
-                    }}
-                  >
-                    <span>View on ArcScan Explorer</span>
-                    <ExternalLink size={12} />
-                  </a>
-                </div>
+                  <span>View Explorer Receipt</span>
+                  <ExternalLink size={10} />
+                </a>
               )}
             </div>
-          ) : !isConnected ? (
+          )}
+
+          {/* Primary Action Button */}
+          {!isConnected && selectedCurrency === "USDC" ? (
             <button
-              id="confirm-bet-btn"
-              onClick={() => {
-                connectMetaMask();
-              }}
+              id="connect-to-bet-btn"
+              onClick={connectMetaMask}
               style={{
                 width: "100%",
                 padding: "0.875rem",
                 fontFamily: "var(--font-body)",
                 fontWeight: 700,
-                fontSize: "0.95rem",
+                fontSize: "0.92rem",
                 borderRadius: "12px",
                 cursor: "pointer",
-                transition: "all 0.18s ease",
                 background: "#2563eb",
                 color: "#ffffff",
                 border: "none",
-                boxShadow: "0 4px 16px rgba(37,99,235,0.35)",
+                boxShadow: "0 4px 14px rgba(37,99,235,0.35)",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#1d4ed8")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#2563eb")}
             >
-              🔒 Connect Wallet to Bet
+              Connect Wallet to Bet
             </button>
           ) : (
             <button
@@ -738,84 +790,51 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
                 padding: "0.875rem",
                 fontFamily: "var(--font-body)",
                 fontWeight: 700,
-                fontSize: "0.95rem",
+                fontSize: "0.92rem",
                 borderRadius: "12px",
                 cursor: amount > 0 && !isPending && !isCalcLoading ? "pointer" : "not-allowed",
                 transition: "all 0.18s ease",
                 background:
-                  amount > 0 && !isPending && !isCalcLoading
-                    ? needsApproval
-                      ? "#ea580c" // Orange for approval
-                      : side === "YES"
-                      ? "#2563eb"
-                      : "#12062a"
-                    : "#e5e7eb",
-                color: amount > 0 && !isPending && !isCalcLoading ? "#ffffff" : "#9ca3af",
-                border: "none",
-                boxShadow:
-                  amount > 0 && !isPending && !isCalcLoading
-                    ? needsApproval
-                      ? "0 4px 16px rgba(234,88,12,0.35)"
-                      : side === "YES"
-                      ? "0 4px 16px rgba(37,99,235,0.35)"
-                      : "0 4px 16px rgba(18,6,42,0.35)"
-                    : "none",
-                opacity: amount > 0 && !isPending && !isCalcLoading ? 1 : 0.7,
-              }}
-              onMouseEnter={(e) => {
-                if (amount > 0 && !isPending) {
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "none";
-              }}
-            >
-              {isPending
-                ? "Processing transaction..."
-                : needsApproval
-                ? "Approve USDC Collateral"
-                : `${side === "YES" ? "📈" : "📉"} Place ${side} Bet — ${amount} USDC`}
-            </button>
-          )}
-
-          {(txError || error) && (
-            <div style={{ fontSize: "0.75rem", color: "#dc2626", textAlign: "center", marginTop: "0.5rem", fontWeight: 600 }}>
-              {txError || error?.message || "Transaction failed"}
-            </div>
-          )}
-
-          {/* GenLayer Transaction Kit Button */}
-          {isConnected && (
-            <button
-              id="genlayer-txkit-bet-btn"
-              type="button"
-              onClick={handleOpenGenLayerModal}
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                marginTop: "0.5rem",
-                fontFamily: "var(--font-body)",
-                fontWeight: 700,
-                fontSize: "0.84rem",
-                borderRadius: "12px",
-                cursor: "pointer",
-                background: "linear-gradient(135deg, #7928ca 0%, #a855f7 100%)",
+                  selectedCurrency === "GEN"
+                    ? "linear-gradient(135deg, #7928ca 0%, #a855f7 100%)"
+                    : needsApproval
+                    ? "#ea580c"
+                    : side === "YES"
+                    ? "#2563eb"
+                    : "#12062a",
                 color: "#ffffff",
                 border: "none",
-                boxShadow: "0 4px 14px rgba(168,85,247,0.3)",
+                boxShadow:
+                  selectedCurrency === "GEN"
+                    ? "0 4px 16px rgba(168,85,247,0.35)"
+                    : needsApproval
+                    ? "0 4px 16px rgba(234,88,12,0.35)"
+                    : "0 4px 16px rgba(37,99,235,0.35)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "0.4rem",
-                transition: "all 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
             >
-              <span>⚡</span>
-              <span>Bet with GenLayer Transaction Kit (Studio Next)</span>
+              {isPending ? (
+                "Processing transaction..."
+              ) : selectedCurrency === "GEN" ? (
+                <>
+                  <Sparkles size={16} />
+                  <span>Bet {amount} $GEN on GenLayer Studio Next</span>
+                </>
+              ) : needsApproval ? (
+                "Approve USDC Collateral"
+              ) : (
+                `${side === "YES" ? "📈" : "📉"} Place ${side} Bet — ${amount} USDC`
+              )}
             </button>
+          )}
+
+          {(txError || error) && (
+            <div style={{ fontSize: "0.75rem", color: "#dc2626", textAlign: "center", fontWeight: 600 }}>
+              {txError || error?.message || "Transaction failed"}
+            </div>
           )}
 
           <p
@@ -825,19 +844,19 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
               color: "#9ca3af",
               textAlign: "center",
               lineHeight: 1.5,
-              marginTop: "0.5rem",
+              marginTop: "0.2rem",
             }}
           >
-            Supports GenLayer Studio Next (Consensus v0.6) and Arc Testnet.
+            Powered by {selectedCurrency === "GEN" ? "GenLayer Studio Next (Consensus v0.6)" : "Arc Testnet (Circle USDC)"}.
           </p>
         </div>
 
-        {/* GenLayer Transaction Kit Modal */}
+        {/* GenLayer Transaction Kit Modal (Studio Next) */}
         <GenLayerTxModal
           isOpen={showGenLayerModal}
           onClose={() => setShowGenLayerModal(false)}
           account={address}
-          title={`Bet ${side} on GenLayer`}
+          title={`Bet ${side} on GenLayer Studio Next`}
           userValue={BigInt(amount) * 10n ** 18n}
           tx={{
             kind: "write",
@@ -847,9 +866,12 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
           }}
           onDone={(status) => {
             setShowGenLayerModal(false);
-            const txHash = (status as any)?.genlayerTxId || (status as any)?.txHash || `gl-${Date.now()}`;
+            const txHash = (status as any)?.genlayerTxId || (status as any)?.txHash || generateTxHash();
+            if (processedHashesRef.current.has(txHash)) return;
+            processedHashesRef.current.add(txHash);
+
             const newBet: UserBet = {
-              id: `bet-${Date.now()}`,
+              id: `bet-${txHash.slice(2, 12)}`,
               txHash,
               marketId: market.id,
               marketTitle: market.title,
@@ -859,9 +881,12 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
               status: "open",
               claimed: false,
               network: "genlayer",
+              currency: "GEN",
             };
             saveUserBet(newBet);
-            if (onPlaceBet) onPlaceBet(market.id, side, amount, txHash);
+            if (onPlaceBet) {
+              onPlaceBet(market.id, side, amount, txHash, "genlayer", "GEN");
+            }
             setPlaced(true);
             setPlacedTx(txHash);
           }}

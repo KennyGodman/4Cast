@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Search, Plus, Trophy, Activity, TrendingUp, Wallet, ChevronDown, LogOut, Copy, Check, Sun, Moon, Droplet, Home, Cpu, ExternalLink, Shield } from "lucide-react";
+import { Search, Plus, Trophy, Activity, TrendingUp, Wallet, ChevronDown, LogOut, Copy, Check, Sun, Moon, Droplet, Home, Cpu, ExternalLink, Shield, Sparkles } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalance } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,11 +11,12 @@ interface HeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   search: string;
-  onSearchChange: (search: string) => void;
+  onSearchChange: (val: string) => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onConnectClick: () => void;
   onGoHome?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 export function Header({
@@ -27,6 +28,7 @@ export function Header({
   onToggleDarkMode,
   onConnectClick,
   onGoHome,
+  onOpenOnboarding,
 }: HeaderProps) {
   const { address, isConnected, walletType, disconnect } = useWallet();
   const queryClient = useQueryClient();
@@ -280,6 +282,34 @@ export function Header({
               </button>
             );
           })}
+
+          {/* How It Works Guide Button */}
+          {onOpenOnboarding && (
+            <button
+              id="guide-btn"
+              onClick={onOpenOnboarding}
+              title="How 4Cast Works & Dual-Network Architecture"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                padding: "0.32rem 0.65rem",
+                borderRadius: "var(--r-pill)",
+                border: "1.5px solid var(--border-1)",
+                background: "var(--bg-2)",
+                color: "var(--text-1)",
+                fontSize: "0.74rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Sparkles size={13} color="var(--teal)" />
+              <span className="guide-btn-text">How It Works</span>
+            </button>
+          )}
 
           {/* GenLayer Studio Next Switcher Pill */}
           <button

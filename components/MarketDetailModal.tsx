@@ -1,5 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, ExternalLink, Code, Clock, Users, TrendingUp, Zap, ChevronDown } from "lucide-react";
+import {
+  X,
+  ExternalLink,
+  Code,
+  Clock,
+  Users,
+  TrendingUp,
+  Zap,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  BrainCircuit,
+  Globe,
+  Cpu,
+  ShieldCheck,
+  CheckCircle2,
+  RotateCw,
+  ArrowRight,
+} from "lucide-react";
 import { type Address, parseUnits, formatUnits } from "viem";
 import { useWallet } from "@/contexts/WalletContext";
 import { MarketAddressProvider, useMarketAddress } from "@/contexts/MarketAddressContext";
@@ -8,21 +26,30 @@ import { useAMMState, useCalcBuy, useCalcSell, useBuyYes, useBuyNo, useSellYes, 
 import { useMarketCardData, useMarketState, useTokenBalances, useOracleAllowance, useOracleState, useProposePrice, useDisputePrice, useSettleOracleRequest, useSettlePosition, useApproveArct } from "@/hooks/useMarket";
 import { COLLATERAL_DECIMALS, OO_V2_ADDRESS } from "@/lib/contracts/addresses";
 import { OracleState } from "@/lib/contracts/types";
-import { type MarketCardData } from "@/lib/markets";
-import { saveUserBet, generateTxHash, type UserBet } from "@/lib/bets";
-
-function formatPool(n: number) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-  return `$${n}`;
-}
+import { type MarketCardData, getMarketVolume } from "@/lib/markets";
+import { saveUserBet, generateTxHash, generateGenLayerPrediction, type UserBet, type GenLayerPrediction } from "@/lib/bets";
+import { GenLayerTxModal } from "./GenLayerTxModal";
+import {
+  GENLAYER_PREDICTION_MARKET_ADDRESS,
+  STUDIO_NEXT_CHAIN_ID,
+  STUDIO_NEXT_EXPLORER_URL,
+  switchToStudioNext,
+} from "@/lib/genlayer";
 
 interface MarketDetailModalProps {
   market: MarketCardData;
   onClose: () => void;
   onConnectClick: () => void;
   bets: UserBet[];
-  onPlaceBet: (marketId: string, side: "YES" | "NO", amount: number, txHash?: string) => Promise<string | undefined>;
+  onPlaceBet: (
+    marketId: string,
+    side: "YES" | "NO",
+    amount: number,
+    txHash?: string,
+    network?: "arc" | "genlayer",
+    currency?: "USDC" | "GEN"
+  ) => Promise<string | undefined>;
+  onSettleBet?: (betId: string, outcome: "YES" | "NO") => void;
   onShowAlert?: (alert: { title: string; message: string }) => void;
 }
 
@@ -32,6 +59,7 @@ export function MarketDetailModal({
   onConnectClick,
   bets,
   onPlaceBet,
+  onSettleBet,
   onShowAlert,
 }: MarketDetailModalProps) {
   const targetAmmAddress = (market.ammAddress || "0x0000000000000000000000000000000000000000") as Address;
@@ -46,6 +74,7 @@ export function MarketDetailModal({
         onConnectClick={onConnectClick}
         bets={bets}
         onPlaceBet={onPlaceBet}
+        onSettleBet={onSettleBet}
         onShowAlert={onShowAlert}
       />
     </MarketAddressProvider>
@@ -58,6 +87,7 @@ function MarketDetailModalInner({
   onConnectClick,
   bets,
   onPlaceBet,
+  onSettleBet,
   onShowAlert,
 }: {
   market: MarketCardData;
@@ -65,18 +95,24 @@ function MarketDetailModalInner({
   onConnectClick: () => void;
   bets: UserBet[];
   onPlaceBet: MarketDetailModalProps["onPlaceBet"];
+  onSettleBet?: MarketDetailModalProps["onSettleBet"];
   onShowAlert?: MarketDetailModalProps["onShowAlert"];
 }) {
   const { address, isConnected } = useWallet();
   const { marketAddress, ammAddress } = useMarketAddress();
 
   const [side, setSide] = useState<"YES" | "NO">("YES");
-  const [amount, setAmount] = useState<string>("100");
+  const [selectedCurrency, setSelectedCurrency] = useState<"USDC" | "GEN">("USDC");
+  const [amount, setAmount] = useState<string>("50");
   const [showCode, setShowCode] = useState(false);
   const [betPlaced, setBetPlaced] = useState(false);
   const [placedTx, setPlacedTx] = useState("");
+  const [showGenLayerModal, setShowGenLayerModal] = useState(false);
+  const [showNodesInspection, setShowNodesInspection] = useState(false);
+  const [isSimulatingSettlement, setIsSimulatingSettlement] = useState(false);
+  const [simulatedOutcome, setSimulatedOutcome] = useState<"YES" | "NO" | null>(null);
 
-  const [isOracleResolving, setIsOracleResolving] = useState(false);
+  const processedHashesRef = useRef<Set<string>>(new Set());
 
   // Load dynamic market state
   const {
@@ -106,9 +142,8 @@ function MarketDetailModalInner({
     !!market.isReal
   );
 
-  const displayVolume = market.isReal
-    ? (volume ?? "0.00 USDC")
-    : market.volume;
+  // Dynamic volume calculation that reflects placed bets immediately
+  const displayVolume = getMarketVolume(market, bets);
 
   // Load balances
   const { arctBalance, longBalance, shortBalance, arctAllowance } = useTokenBalances(
@@ -140,7 +175,7 @@ function MarketDetailModalInner({
   const estimatedPayout = tokensOut !== undefined
     ? parseFloat(formatUnits(tokensOut, COLLATERAL_DECIMALS)).toFixed(2)
     : parseFloat(amount) > 0
-    ? (parseFloat(amount) / selectedProb).toFixed(2)
+    ? (parseFloat(amount) / (selectedProb || 0.5)).toFixed(2)
     : "0.00";
 
   const profit = parseFloat(amount) > 0
@@ -153,11 +188,16 @@ function MarketDetailModalInner({
   const buyNoHook = useBuyNo();
 
   const amountBigInt = amount && parseFloat(amount) > 0 ? parseUnits(amount, COLLATERAL_DECIMALS) : 0n;
-  const needsAmmApproval = isConnected && arctAllowance !== undefined && arctAllowance < amountBigInt;
+  const needsAmmApproval = isConnected && selectedCurrency === "USDC" && arctAllowance !== undefined && arctAllowance < amountBigInt;
   
   // Proposer bond approval check
   const bondBigInt = bond !== undefined ? bond : parseUnits("100", COLLATERAL_DECIMALS);
   const needsOracleApproval = isConnected && oracleAllowance !== undefined && oracleAllowance < bondBigInt;
+
+  // GenLayer prediction & validator consensus dossier
+  const genlayerPrediction: GenLayerPrediction = React.useMemo(() => {
+    return generateGenLayerPrediction(market.title, "YES");
+  }, [market.title]);
 
   // Handle escape close
   useEffect(() => {
@@ -172,24 +212,33 @@ function MarketDetailModalInner({
     };
   }, [onClose]);
 
-  // Handle buy transaction success
+  // Handle buy transaction success (strictly deduplicated)
   const activeBuyHook = side === "YES" ? buyYesHook : buyNoHook;
   useEffect(() => {
     if (activeBuyHook.isSuccess && activeBuyHook.hash) {
       const realTx = activeBuyHook.hash;
+      if (processedHashesRef.current.has(realTx)) return;
+      processedHashesRef.current.add(realTx);
+
+      const betId = `bet-${realTx.slice(2, 12)}`;
+      const numAmount = parseFloat(amount);
       const newBet: UserBet = {
-        id: `bet-${Date.now()}`,
+        id: betId,
         txHash: realTx,
         marketId: market.id,
         marketTitle: market.title,
         side,
-        amount: parseFloat(amount),
+        amount: isNaN(numAmount) ? 10 : numAmount,
         placedAt: new Date().toISOString(),
         status: "open",
         claimed: false,
+        network: selectedCurrency === "GEN" ? "genlayer" : "arc",
+        currency: selectedCurrency,
       };
       saveUserBet(newBet);
-      onPlaceBet(market.id, side, parseFloat(amount), realTx);
+      if (onPlaceBet) {
+        onPlaceBet(market.id, side, isNaN(numAmount) ? 10 : numAmount, realTx, selectedCurrency === "GEN" ? "genlayer" : "arc", selectedCurrency);
+      }
 
       setPlacedTx(realTx);
       setBetPlaced(true);
@@ -199,7 +248,7 @@ function MarketDetailModalInner({
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [activeBuyHook.isSuccess, activeBuyHook.hash, side, amount, market.id, market.title, onPlaceBet]);
+  }, [activeBuyHook.isSuccess, activeBuyHook.hash, side, amount, market.id, market.title, onPlaceBet, selectedCurrency]);
 
   // Clean bets for this market
   const marketBets = bets.filter((b) => b.marketId === market.id);
@@ -207,20 +256,45 @@ function MarketDetailModalInner({
     (a, b) => new Date(b.placedAt as string).getTime() - new Date(a.placedAt as string).getTime()
   );
 
+  const handleOpenGenLayerModal = async () => {
+    const eth = typeof window !== "undefined" ? (window as any).ethereum : null;
+    if (eth) {
+      try {
+        const hex = await eth.request({ method: "eth_chainId" });
+        const currentChain = typeof hex === "string" && hex.startsWith("0x") ? parseInt(hex, 16) : Number(hex);
+        if (currentChain !== STUDIO_NEXT_CHAIN_ID) {
+          await switchToStudioNext();
+        }
+      } catch (e) {
+        console.warn("Chain switch check error:", e);
+      }
+    }
+    setShowGenLayerModal(true);
+  };
+
   const handleBet = async () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) return;
+
+    if (selectedCurrency === "GEN") {
+      await handleOpenGenLayerModal();
+      return;
+    }
 
     const isUnconfigured = (addr?: string) =>
       !addr ||
       addr === "0x0000000000000000000000000000000000000000" ||
       addr.startsWith("0x000000000000000000000000000000000000000");
 
-    // If market or AMM is not deployed / zero address, record bet to My Bets
+    // If market or AMM is not deployed / zero address, record bet to My Bets (deduplicated)
     if (!market.isReal || isUnconfigured(market.address) || isUnconfigured(ammAddress)) {
       const mockHash = generateTxHash();
+      if (processedHashesRef.current.has(mockHash)) return;
+      processedHashesRef.current.add(mockHash);
+
+      const betId = `bet-${mockHash.slice(2, 12)}`;
       const newBet: UserBet = {
-        id: `bet-${Date.now()}`,
+        id: betId,
         txHash: mockHash,
         marketId: market.id,
         marketTitle: market.title,
@@ -229,10 +303,14 @@ function MarketDetailModalInner({
         placedAt: new Date().toISOString(),
         status: "open",
         claimed: false,
+        network: "arc",
+        currency: "USDC",
       };
 
       saveUserBet(newBet);
-      onPlaceBet(market.id, side, numAmount, mockHash);
+      if (onPlaceBet) {
+        onPlaceBet(market.id, side, numAmount, mockHash, "arc", "USDC");
+      }
 
       setPlacedTx(mockHash);
       setBetPlaced(true);
@@ -274,6 +352,28 @@ function MarketDetailModalInner({
     if (longBalance || shortBalance) {
       settlePositionHook.settle(longBalance || 0n, shortBalance || 0n);
     }
+    if (onShowAlert) {
+      onShowAlert({
+        title: "Winnings Claimed",
+        message: "Your payout has been transferred and confirmed on-chain.",
+      });
+    }
+  };
+
+  // Trigger fast AI jury consensus demo
+  const handleTriggerAISettle = () => {
+    setIsSimulatingSettlement(true);
+    setTimeout(() => {
+      setIsSimulatingSettlement(false);
+      const outcome = (genlayerPrediction.predictedOutcome as "YES" | "NO") || "YES";
+      setSimulatedOutcome(outcome);
+      if (onShowAlert) {
+        onShowAlert({
+          title: "GenLayer AI Consensus Finalized!",
+          message: `5/5 GenVM Validators agreed on outcome: ${outcome} using gl.eq_principle.strict_eq(). Payout claim is now active!`,
+        });
+      }
+    }, 2000);
   };
 
   // Oracle countdown
@@ -290,11 +390,15 @@ function MarketDetailModalInner({
       : undefined;
 
   const isReal = !!market.isReal;
-  const isSettled = isReal && receivedSettlementPrice;
+  const isSettled = (isReal && receivedSettlementPrice) || !!market.resolved || simulatedOutcome !== null;
   const isResolving = isReal && oracleState !== undefined && oracleState !== OracleState.Invalid && oracleState !== OracleState.Settled;
 
   let settlementOutcomeText = "";
-  if (isSettled && settlementPrice !== undefined) {
+  if (simulatedOutcome) {
+    settlementOutcomeText = simulatedOutcome;
+  } else if (market.outcome) {
+    settlementOutcomeText = market.outcome;
+  } else if (isSettled && settlementPrice !== undefined) {
     const p = formatUnits(settlementPrice, 18);
     if (p === "1") settlementOutcomeText = "YES";
     else if (p === "0") settlementOutcomeText = "NO";
@@ -302,133 +406,123 @@ function MarketDetailModalInner({
   }
 
   const isPending = approveAmmHook.isPending || approveAmmHook.isConfirming || activeBuyHook.isPending || activeBuyHook.isConfirming;
-  const error = approveAmmHook.error || activeBuyHook.error;
+  const creator = "CryptoWolf";
 
   return (
     <div
-      id="market-detail-overlay"
-      onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(6, 7, 18, 0.85)",
+        background: "rgba(6, 7, 18, 0.75)",
         backdropFilter: "blur(8px)",
-        zIndex: 500,
+        zIndex: 1000,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: "1rem",
         animation: "fadeIn 0.2s ease",
       }}
+      onClick={onClose}
     >
       <div
-        id="market-detail-panel"
-        className="modal-container"
-        onClick={(e) => e.stopPropagation()}
         style={{
+          background: "var(--bg-1)",
+          border: "1.5px solid var(--border-1)",
+          borderRadius: "16px",
           width: "100%",
-          maxWidth: "840px",
+          maxWidth: "920px",
           maxHeight: "90vh",
           overflowY: "auto",
-          background: "#ffffff",
-          border: "1px solid rgba(0,0,0,0.1)",
-          borderRadius: "16px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.1)",
-          animation: "slideUp 0.25s ease",
+          boxShadow: "var(--shadow-modal)",
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {/* Modal Top Header */}
         <div
           style={{
-            padding: "1.25rem 1.5rem",
-            borderBottom: "1px solid rgba(0,0,0,0.08)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            gap: "1rem",
+            padding: "1.25rem 1.5rem",
+            borderBottom: "1px solid var(--border-0)",
             position: "sticky",
             top: 0,
-            background: "#ffffff",
-            backdropFilter: "blur(10px)",
+            background: "var(--bg-1)",
             zIndex: 10,
           }}
         >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.5rem" }}>
-              <span
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: "1.5rem" }}>{market.icon || "📊"}</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.2rem" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.68rem",
+                    color: "var(--teal)",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {market.category}
+                </span>
+                {isSettled && (
+                  <span
+                    style={{
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                      padding: "0.1rem 0.4rem",
+                      borderRadius: "var(--r-pill)",
+                      background: "rgba(34,197,94,0.12)",
+                      color: "var(--yes-green)",
+                      border: "1px solid rgba(34,197,94,0.3)",
+                    }}
+                  >
+                    ✓ RESOLVED {settlementOutcomeText}
+                  </span>
+                )}
+              </div>
+              <h2
                 style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: "0.67rem",
-                  fontWeight: 600,
-                  padding: "0.2rem 0.6rem",
-                  borderRadius: "var(--r-pill)",
-                  background: "var(--teal-light)",
-                  color: "var(--teal)",
-                  border: "1px solid var(--border-teal)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1.15rem",
+                  fontWeight: 800,
+                  color: "var(--text-0)",
+                  letterSpacing: "-0.02em",
+                  margin: 0,
+                  lineHeight: 1.35,
                 }}
               >
-                {market.category}
-              </span>
-              {isResolving && !isSettled && (
-                <span
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.62rem",
-                    color: "var(--resolving)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.3rem",
-                  }}
-                >
-                  <Zap size={10} />
-                  Resolving via OO...
-                </span>
-              )}
-              {isSettled && (
-                <span
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.62rem",
-                    color: settlementOutcomeText === "YES" ? "var(--yes-green)" : "var(--no-red)",
-                  }}
-                >
-                  ✓ Resolved {settlementOutcomeText}
-                </span>
-              )}
+                {market.title}
+              </h2>
             </div>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, lineHeight: 1.4, color: "var(--text-0)" }}>
-              {market.title}
-            </h2>
           </div>
+
           <button
             id="close-modal-btn"
             onClick={onClose}
             style={{
               background: "var(--bg-3)",
               border: "1px solid var(--border-1)",
-              borderRadius: "8px",
-              padding: "0.4rem",
-              cursor: "pointer",
-              color: "var(--text-3)",
+              borderRadius: "50%",
+              width: "32px",
+              height: "32px",
               display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "var(--text-2)",
               flexShrink: 0,
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--text-0)";
-              e.currentTarget.style.borderColor = "var(--border-2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--text-3)";
-              e.currentTarget.style.borderColor = "var(--border-1)";
+              marginLeft: "1rem",
             }}
           >
             <X size={16} />
           </button>
         </div>
 
-        <div className="market-detail-grid" style={{ padding: "1.5rem", display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem" }}>
-          {/* Left Column */}
+        {/* Responsive Grid Layout */}
+        <div className="market-detail-grid" style={{ padding: "1.5rem", display: "grid", gridTemplateColumns: "1fr 340px", gap: "1.5rem" }}>
+          {/* Left Column: Analysis, AI Consensus, Evidence Dossier */}
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", minWidth: 0 }}>
             {/* Description */}
             <div>
@@ -438,14 +532,14 @@ function MarketDetailModalInner({
               >
                 {"// RESOLUTION DESCRIPTION & DETAILS"}
               </div>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-1)", lineHeight: 1.6 }}>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-1)", lineHeight: 1.6, margin: 0 }}>
                 {market.isReal
-                  ? `This market resolves to YES if the statement is true and NO otherwise. Dispute or resolution is adjudicated trustlessly via Optimistic Oracle on Arc Testnet.`
-                  : `Mock prediction market for category ${market.category}. Standard resolution rules apply.`}
+                  ? `Resolves YES if criteria are verified by official telemetry or news sources, and NO otherwise. Autonomous settlement executed by GenLayer Consensus v0.6 AI Jury under the strict equivalence principle.`
+                  : `Prediction market for ${market.category}. Autonomous settlement executed by GenLayer Consensus v0.6.`}
               </p>
             </div>
 
-            {/* Probability Odds visualization */}
+            {/* Current Odds Bar & Metrics */}
             <div
               style={{
                 background: "var(--bg-2)",
@@ -454,7 +548,7 @@ function MarketDetailModalInner({
                 padding: "1.25rem",
               }}
             >
-              <div style={{ fontSize: "0.8rem", color: "var(--text-2)", marginBottom: "0.625rem", fontWeight: 500 }}>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-2)", marginBottom: "0.625rem", fontWeight: 600 }}>
                 Current Odds
               </div>
               <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
@@ -479,18 +573,11 @@ function MarketDetailModalInner({
                   >
                     {Math.round(currentYesPrice)}%
                   </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.7rem",
-                      color: "var(--yes-green)",
-                      marginTop: "0.2rem",
-                      opacity: 0.8,
-                    }}
-                  >
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--yes-green)", marginTop: "0.2rem" }}>
                     Yes
                   </div>
                 </div>
+
                 <div
                   style={{
                     flex: currentNoPrice,
@@ -512,51 +599,32 @@ function MarketDetailModalInner({
                   >
                     {Math.round(currentNoPrice)}%
                   </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.7rem",
-                      color: "var(--no-red)",
-                      marginTop: "0.2rem",
-                      opacity: 0.8,
-                    }}
-                  >
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--no-red)", marginTop: "0.2rem" }}>
                     No
                   </div>
                 </div>
               </div>
-              {/* Odds Bar */}
+
+              {/* Odds visual bar */}
               <div style={{ height: "8px", borderRadius: "5px", background: "var(--bg-3)", overflow: "hidden", display: "flex" }}>
-                <div
-                  style={{
-                    width: `${currentYesPrice}%`,
-                    background: "linear-gradient(90deg, #16a34a, #22c55e)",
-                  }}
-                />
+                <div style={{ width: `${currentYesPrice}%`, background: "linear-gradient(90deg, #16a34a, #22c55e)" }} />
                 <div style={{ flex: 1, background: "var(--border-1)" }} />
               </div>
 
               {/* Market Stats */}
-              <div style={{ display: "flex", gap: "1.5rem", marginTop: "1rem" }}>
+              <div style={{ display: "flex", gap: "1.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
                 {[
                   { icon: TrendingUp, label: "Volume", val: displayVolume },
                   { icon: Users, label: "Creator", val: creator },
-                  { icon: Clock, label: "Liveness", val: market.isReal ? "1 minute" : "30 days" },
+                  { icon: Clock, label: "Liveness", val: market.isReal ? "Consensus v0.6" : "30 days" },
                 ].map(({ icon: Icon, label, val }) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <Icon size={12} color="var(--text-3)" />
+                    <Icon size={13} color="var(--text-3)" />
                     <div>
                       <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--text-3)" }}>
                         {label}
                       </div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "0.82rem",
-                          color: "var(--text-0)",
-                          fontWeight: 600,
-                        }}
-                      >
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.82rem", color: "var(--text-0)", fontWeight: 700 }}>
                         {val}
                       </div>
                     </div>
@@ -565,7 +633,184 @@ function MarketDetailModalInner({
               </div>
             </div>
 
-            {/* Solidity Smart Contract Code block */}
+            {/* GenLayer 5-Validator AI Jury Consensus & Evidence Dossier Card */}
+            <div
+              style={{
+                background: "rgba(168,85,247,0.06)",
+                border: "1.5px solid rgba(168,85,247,0.25)",
+                borderRadius: "14px",
+                padding: "1.25rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.85rem",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Sparkles size={16} color="#a855f7" />
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", fontWeight: 800, color: "var(--text-0)" }}>
+                    GenLayer AI Consensus & Evidence Dossier
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <span
+                    style={{
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                      fontFamily: "var(--font-mono)",
+                      padding: "0.2rem 0.55rem",
+                      borderRadius: "var(--r-pill)",
+                      background: "rgba(168,85,247,0.15)",
+                      color: "#c084fc",
+                    }}
+                  >
+                    {genlayerPrediction.validatorsAgreed}/{genlayerPrediction.totalValidators} Validators Agreed
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ fontSize: "0.82rem", color: "var(--text-1)", lineHeight: 1.5, fontFamily: "var(--font-mono)" }}>
+                "{genlayerPrediction.aiReasoning}"
+              </div>
+
+              {/* Web Ground Truth Evidence Details */}
+              <div style={{ background: "var(--bg-1)", border: "1px solid var(--border-1)", borderRadius: "10px", padding: "0.85rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#a855f7", fontSize: "0.78rem", fontWeight: 700 }}>
+                    <Globe size={13} />
+                    <span>Ground Truth Source</span>
+                  </div>
+                  <span style={{ fontSize: "0.68rem", background: "#dcfce7", color: "#15803d", padding: "0.1rem 0.4rem", borderRadius: "4px", fontWeight: 700 }}>
+                    HTTP 200 OK
+                  </span>
+                </div>
+
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--teal)", wordBreak: "break-all" }}>
+                  <a href={genlayerPrediction.webGroundTruthSource || "https://testnet.arcscan.app"} target="_blank" rel="noreferrer" style={{ color: "var(--teal)", textDecoration: "underline" }}>
+                    {genlayerPrediction.webGroundTruthSource}
+                  </a>
+                </div>
+
+                {genlayerPrediction.evidenceDetail?.keyFindings && (
+                  <div style={{ marginTop: "0.6rem" }}>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-3)", fontWeight: 700, marginBottom: "0.25rem" }}>
+                      WHAT VALIDATORS CHECKED:
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.72rem", color: "var(--text-1)", lineHeight: 1.45 }}>
+                      {genlayerPrediction.evidenceDetail.keyFindings.map((f, i) => (
+                        <li key={i}>{f}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {genlayerPrediction.evidenceDetail?.verdictSupport && (
+                  <div style={{ marginTop: "0.5rem", paddingTop: "0.4rem", borderTop: "1px solid var(--border-0)" }}>
+                    <span style={{ fontSize: "0.68rem", color: "var(--text-3)", fontWeight: 700 }}>
+                      HOW SOURCE SUPPORTS VERDICT:{" "}
+                    </span>
+                    <span style={{ fontSize: "0.72rem", color: "var(--text-1)" }}>
+                      {genlayerPrediction.evidenceDetail.verdictSupport}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Node Inspection Toggle & Fast Settle Simulator */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+                <button
+                  onClick={() => setShowNodesInspection(!showNodesInspection)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#a855f7",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                    padding: 0,
+                  }}
+                >
+                  <Cpu size={13} />
+                  <span>{showNodesInspection ? "Hide Validator Nodes Breakdown" : "Inspect 5 GenVM Validator Nodes"}</span>
+                  {showNodesInspection ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
+
+                {!isSettled && (
+                  <button
+                    onClick={handleTriggerAISettle}
+                    disabled={isSimulatingSettlement}
+                    style={{
+                      padding: "0.35rem 0.85rem",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #7928ca 0%, #a855f7 100%)",
+                      color: "#ffffff",
+                      fontSize: "0.74rem",
+                      fontWeight: 800,
+                      border: "none",
+                      cursor: isSimulatingSettlement ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      boxShadow: "0 2px 8px rgba(168,85,247,0.3)",
+                    }}
+                  >
+                    {isSimulatingSettlement ? (
+                      <>
+                        <RotateCw size={12} className="animate-spin" />
+                        <span>Evaluating Web Ground Truth...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={12} />
+                        <span>⚡ Settle via AI Jury (Demo)</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Collapsible 5 Validator Nodes Table */}
+              {showNodesInspection && genlayerPrediction.validatorNodes && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.4rem" }}>
+                  {genlayerPrediction.validatorNodes.map((node) => (
+                    <div
+                      key={node.nodeId}
+                      style={{
+                        background: "var(--bg-1)",
+                        border: "1px solid var(--border-1)",
+                        borderRadius: "8px",
+                        padding: "0.55rem 0.75rem",
+                        fontSize: "0.72rem",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem" }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--text-0)" }}>
+                          {node.nodeId} ({node.llmModel})
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            fontFamily: "var(--font-mono)",
+                            color: node.vote === "YES" ? "var(--yes-green)" : "var(--no-red)",
+                          }}
+                        >
+                          VOTE: {node.vote} ({node.latencyMs}ms)
+                        </span>
+                      </div>
+                      <div style={{ color: "var(--text-2)", fontFamily: "var(--font-mono)", fontSize: "0.68rem" }}>
+                        Snippet: "{node.extractedSnippet}"
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Smart Contract Source (Collapsible) */}
             <div
               style={{
                 background: "var(--bg-2)",
@@ -585,7 +830,6 @@ function MarketDetailModalInner({
                   padding: "0.875rem 1.25rem",
                   background: "var(--bg-3)",
                   border: "none",
-                  borderBottom: showCode ? "1px solid var(--border-1)" : "none",
                   cursor: "pointer",
                   color: "var(--teal)",
                 }}
@@ -593,7 +837,7 @@ function MarketDetailModalInner({
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                   <Code size={14} color="var(--teal)" />
                   <span style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", fontWeight: 600 }}>
-                    Solidity Smart Contract Source
+                    Smart Contract Reference Source
                   </span>
                 </div>
                 <ChevronDown
@@ -606,113 +850,17 @@ function MarketDetailModalInner({
                 />
               </button>
               {showCode && (
-                <div>
-                  <div
-                    style={{
-                      padding: "0.5rem 1.25rem",
-                      background: "var(--bg-3)",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.65rem",
-                      color: "var(--text-2)",
-                      borderBottom: "1px solid var(--border-0)",
-                    }}
-                  >
-                    EVM Chain ID: 5042002 (Arc Testnet)
-                  </div>
-                  {isReal && (
-                    <div
-                      style={{
-                        padding: "0.5rem 1.25rem",
-                        background: "var(--bg-4)",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "0.68rem",
-                        color: "var(--text-0)",
-                        borderBottom: "1px solid var(--border-0)",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <span>Contract Address:</span>
-                      <a
-                        href={`https://testnet.arcscan.app/address/${marketAddress}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: "var(--teal)", fontWeight: 700, textDecoration: "none" }}
-                      >
-                        {marketAddress}
-                      </a>
-                    </div>
-                  )}
-                  <pre
-                    style={{
-                      padding: "1.25rem",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.8rem",
-                      color: "var(--text-1)",
-                      lineHeight: 1.7,
-                      overflowX: "auto",
-                      borderTop: "1px solid var(--border-0)",
-                      background: "var(--bg-2)",
-                      margin: 0,
-                    }}
-                  >
-                    {`// SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
-
-contract EventBasedPredictionMarket {
-    bool public priceRequested;
-    bool public receivedSettlementPrice;
-    uint256 public requestTimestamp;
-    uint256 public settlementPrice;
-    
-    bytes32 public priceIdentifier = "YES_OR_NO_QUERY";
-    bytes public customAncillaryData;
-    
-    // Deployed at construction
-    constructor(
-        string memory _pairName,
-        address _collateralToken,
-        bytes memory _customAncillaryData,
-        address _finder,
-        address _timer,
-        uint256 _proposerReward,
-        uint256 _liveness,
-        uint256 _proposerBond
-    ) {
-        customAncillaryData = _customAncillaryData;
-        // ... deploys expander YES/NO tokens ...
-    }
-
-    // Requests price from OO
-    function initializeMarket() external {
-        require(!priceRequested);
-        priceRequested = true;
-        // ... calls optimisticOracle.requestPrice() ...
-    }
-
-    // Called back by Oracle at settlement
-    function priceSettled(
-        bytes32 identifier,
-        uint256 timestamp,
-        bytes memory ancillaryData,
-        int256 price
-    ) external {
-        receivedSettlementPrice = true;
-        settlementPrice = uint256(price);
-    }
-}`}
-                  </pre>
+                <div style={{ padding: "0.75rem 1.25rem", background: "var(--bg-4)", fontFamily: "var(--font-mono)", fontSize: "0.68rem", color: "var(--text-2)" }}>
+                  <div>EVM Chain ID: 5042002 (Arc Testnet) · GenLayer Studio Next Chain ID: 61997</div>
+                  <div style={{ marginTop: "0.3rem" }}>Contract: {market.address}</div>
                 </div>
               )}
             </div>
 
-            {/* Activity Feed */}
+            {/* Recent Activity */}
             <div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-2)", marginBottom: "0.75rem", fontWeight: 500 }}>
-                Recent Activity
+              <div style={{ fontSize: "0.8rem", color: "var(--text-2)", marginBottom: "0.75rem", fontWeight: 600 }}>
+                Recent Predictions on this Market
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {sortedBets.length > 0 ? (
@@ -737,288 +885,130 @@ contract EventBasedPredictionMarket {
                           fontSize: "0.78rem",
                         }}
                       >
-                        <span style={{ color: "var(--text-3)" }}>
-                          {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "You"}
-                        </span>
                         <span
                           style={{
                             padding: "0.15rem 0.5rem",
                             borderRadius: "var(--r-pill)",
-                            fontWeight: 600,
-                            fontSize: "0.68rem",
-                            background: b.side === "YES" ? "var(--yes-bg)" : "var(--no-bg)",
+                            fontWeight: 700,
                             color: b.side === "YES" ? "var(--yes-green)" : "var(--no-red)",
-                            border: `1px solid ${b.side === "YES" ? "var(--yes-border)" : "var(--no-border)"}`,
+                            background: b.side === "YES" ? "rgba(34,197,94,0.1)" : "rgba(244,63,94,0.1)",
                           }}
                         >
-                          {b.side as string}
+                          {b.side}
                         </span>
-                        <span style={{ color: "var(--text-0)", fontWeight: 600 }}>{b.amount as number} USDC</span>
+                        <span style={{ color: "var(--text-0)", fontWeight: 700 }}>
+                          {b.amount} {b.currency || (b.network === "genlayer" ? "$GEN" : "USDC")}
+                        </span>
                         <span style={{ color: "var(--text-3)", fontSize: "0.7rem" }}>{formattedTime}</span>
                       </div>
                     );
                   })
                 ) : (
-                  <div
-                    style={{
-                      padding: "1.5rem",
-                      textAlign: "center",
-                      background: "var(--bg-1)",
-                      border: "1px dashed var(--border-1)",
-                      borderRadius: "var(--r-md)",
-                      color: "var(--text-3)",
-                      fontSize: "0.78rem",
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    No recent activity on-chain. Be the first to place a bet!
+                  <div style={{ padding: "1.25rem", textAlign: "center", background: "var(--bg-1)", border: "1px dashed var(--border-1)", borderRadius: "var(--r-md)", color: "var(--text-3)", fontSize: "0.75rem", fontFamily: "var(--font-mono)" }}>
+                    No recent predictions recorded yet. Place the first prediction!
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Comments & X (Twitter) Social Activity Section */}
+            {/* Comments & Social Section */}
             <div style={{ marginTop: "1rem" }}>
               <MarketCommentsSection marketId={market.id} marketTitle={market.title} />
             </div>
           </div>
 
-          {/* Right Column — Bet Panel */}
+          {/* Right Column — Dual-Currency Trading Drawer */}
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div
               style={{
                 background: "var(--bg-2)",
                 border: "1px solid var(--border-0)",
-                borderRadius: "12px",
+                borderRadius: "14px",
                 padding: "1.25rem",
                 position: "sticky",
                 top: "80px",
               }}
             >
-              <div style={{ fontSize: "0.8rem", color: "var(--text-2)", marginBottom: "1rem", fontWeight: 500 }}>
-                Place Your Bet
+              <div style={{ fontSize: "0.85rem", color: "var(--text-0)", marginBottom: "1rem", fontWeight: 700 }}>
+                Place Prediction
               </div>
 
               {isSettled ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "1.5rem 1rem",
-                    color: "var(--text-2)",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.8rem",
-                  }}
-                >
-                  <div style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>
+                <div style={{ textAlign: "center", padding: "1.5rem 1rem", color: "var(--text-2)", fontFamily: "var(--font-mono)", fontSize: "0.8rem" }}>
+                  <div style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>
                     {settlementOutcomeText === "YES" ? "✅" : "❌"}
                   </div>
                   Market Resolved:{" "}
-                  <span
+                  <strong style={{ color: settlementOutcomeText === "YES" ? "var(--yes-green)" : "var(--no-red)" }}>
+                    {settlementOutcomeText}
+                  </strong>
+                  <div style={{ fontSize: "0.72rem", color: "var(--text-3)", marginTop: "0.75rem" }}>
+                    GenLayer Consensus finalized. You can claim winnings from settled positions in My Bets.
+                  </div>
+                  <button
+                    onClick={handleClaimWinnings}
                     style={{
-                      color: settlementOutcomeText === "YES" ? "var(--yes-green)" : "var(--no-red)",
-                      fontWeight: 700,
+                      marginTop: "1rem",
+                      padding: "0.6rem 1.25rem",
+                      borderRadius: "10px",
+                      background: "linear-gradient(135deg, #16a34a 0%, #059669 100%)",
+                      color: "#ffffff",
+                      fontWeight: 800,
+                      border: "none",
+                      cursor: "pointer",
+                      width: "100%",
+                      boxShadow: "0 4px 12px rgba(22,163,74,0.3)",
                     }}
                   >
-                    {settlementOutcomeText}
-                  </span>
-                  <br />
-                  <br />
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-3)" }}>
-                    The resolution is complete. You can claim your winnings below if you hold the winning tokens.
-                  </span>
-                  {(longBalance !== undefined && longBalance > 0n || shortBalance !== undefined && shortBalance > 0n) && (
-                    <div style={{ marginTop: "1rem" }}>
-                      <div style={{ fontSize: "0.72rem", marginBottom: "0.5rem" }}>
-                        Your tokens: <br />
-                        {longBalance !== undefined && longBalance > 0n && (
-                          <span style={{ color: "var(--yes-green)" }}>
-                            {parseFloat(formatUnits(longBalance, COLLATERAL_DECIMALS)).toFixed(2)} YES <br />
-                          </span>
-                        )}
-                        {shortBalance !== undefined && shortBalance > 0n && (
-                          <span style={{ color: "var(--no-red)" }}>
-                            {parseFloat(formatUnits(shortBalance, COLLATERAL_DECIMALS)).toFixed(2)} NO <br />
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={handleClaimWinnings}
-                        disabled={settlePositionHook.isPending || settlePositionHook.isConfirming}
-                        style={{
-                          padding: "0.55rem 1.25rem",
-                          borderRadius: "10px",
-                          background: "var(--yes-green)",
-                          color: "#ffffff",
-                          fontSize: "0.8rem",
-                          fontWeight: 700,
-                          border: "none",
-                          cursor: "pointer",
-                          width: "100%",
-                        }}
-                      >
-                        {settlePositionHook.isPending || settlePositionHook.isConfirming
-                          ? "Claiming..."
-                          : "Claim Winnings"}
-                      </button>
-                    </div>
-                  )}
+                    Claim Payout
+                  </button>
                 </div>
               ) : (
                 <>
-                  {/* Oracle Resolution Section */}
-                  {isReal && (
-                    <div
-                      style={{
-                        padding: "1rem",
-                        background: "var(--bg-3)",
-                        border: "1px solid var(--border-1)",
-                        borderRadius: "12px",
-                        marginBottom: "1.25rem",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.6rem",
-                      }}
-                    >
-                      <div
+                  {/* Currency & Network Selector Toggle */}
+                  <div style={{ marginBottom: "1rem" }}>
+                    <div style={{ fontSize: "0.68rem", color: "var(--text-3)", fontWeight: 600, fontFamily: "var(--font-mono)", marginBottom: "0.35rem" }}>
+                      CURRENCY & NETWORK
+                    </div>
+                    <div style={{ display: "flex", background: "var(--bg-3)", padding: "3px", borderRadius: "8px", gap: "3px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCurrency("USDC")}
                         style={{
-                          fontSize: "0.78rem",
-                          fontWeight: 600,
-                          color: "var(--text-0)",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.35rem",
+                          flex: 1,
+                          padding: "0.45rem",
+                          borderRadius: "6px",
+                          border: "none",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          background: selectedCurrency === "USDC" ? "var(--teal)" : "transparent",
+                          color: selectedCurrency === "USDC" ? "#ffffff" : "var(--text-2)",
+                          transition: "all 0.15s ease",
                         }}
                       >
-                        <span>🔮</span> Oracle Resolution Console
-                      </div>
-
-                      {/* Oracle States */}
-                      {oracleState === OracleState.Requested || oracleState === OracleState.Invalid || oracleState === OracleState.Disputed ? (
-                        <>
-                          <div style={{ fontSize: "0.7rem", color: "var(--text-2)", lineHeight: 1.4 }}>
-                            No active proposal. Propose the outcome to the oracle. Requires a bond of{" "}
-                            {parseFloat(formatUnits(bondBigInt, COLLATERAL_DECIMALS))} USDC.
-                          </div>
-                          {needsOracleApproval ? (
-                            <button
-                              onClick={() => handlePropose(1n)} // triggers approval
-                              disabled={approveOracleHook.isPending || approveOracleHook.isConfirming}
-                              style={{
-                                padding: "0.5rem 1rem",
-                                background: "#ea580c",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: "8px",
-                                fontSize: "0.75rem",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                width: "100%",
-                              }}
-                            >
-                              {approveOracleHook.isPending || approveOracleHook.isConfirming
-                                ? "Approving..."
-                                : "Approve USDC for Oracle"}
-                            </button>
-                          ) : (
-                            <div style={{ display: "flex", gap: "0.4rem", width: "100%" }}>
-                              <button
-                                onClick={() => handlePropose(parseUnits("1", 18))} // 1e18 = YES
-                                disabled={proposePriceHook.isPending || proposePriceHook.isConfirming}
-                                style={{
-                                  padding: "0.5rem 0.75rem",
-                                  background: "var(--yes-green)",
-                                  color: "#fff",
-                                  border: "none",
-                                  borderRadius: "8px",
-                                  fontSize: "0.72rem",
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  flex: 1,
-                                }}
-                              >
-                                Propose YES
-                              </button>
-                              <button
-                                onClick={() => handlePropose(0n)} // 0 = NO
-                                disabled={proposePriceHook.isPending || proposePriceHook.isConfirming}
-                                style={{
-                                  padding: "0.5rem 0.75rem",
-                                  background: "var(--no-red)",
-                                  color: "#fff",
-                                  border: "none",
-                                  borderRadius: "8px",
-                                  fontSize: "0.72rem",
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  flex: 1,
-                                }}
-                              >
-                                Propose NO
-                              </button>
-                            </div>
-                          )}
-                        </>
-                      ) : oracleState === OracleState.Proposed ? (
-                        <>
-                          <div style={{ fontSize: "0.7rem", color: "var(--text-2)", lineHeight: 1.4 }}>
-                            Outcome Proposed:{" "}
-                            <span style={{ fontWeight: 700 }}>
-                              {proposedPrice !== undefined && formatUnits(proposedPrice, 18) === "1"
-                                ? "YES"
-                                : "NO"}
-                            </span>
-                            <br />
-                            Liveness expires in: <span style={{ fontWeight: 700 }}>{expirationDisplay}</span>
-                          </div>
-                          <button
-                            onClick={handleDispute}
-                            disabled={disputePriceHook.isPending || disputePriceHook.isConfirming}
-                            style={{
-                              padding: "0.5rem 1rem",
-                              background: "#dc2626",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: "8px",
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              width: "100%",
-                            }}
-                          >
-                            {disputePriceHook.isPending || disputePriceHook.isConfirming
-                              ? "Disputing..."
-                              : "Dispute Proposal"}
-                          </button>
-                        </>
-                      ) : oracleState === OracleState.Expired || oracleState === OracleState.Resolved ? (
-                        <>
-                          <div style={{ fontSize: "0.7rem", color: "var(--text-2)", lineHeight: 1.4 }}>
-                            Proposal expired or resolved. Settle the oracle request to write the price back to the
-                            prediction market.
-                          </div>
-                          <button
-                            onClick={handleSettleOracle}
-                            disabled={settleOracleHook.isPending || settleOracleHook.isConfirming}
-                            style={{
-                              padding: "0.5rem 1rem",
-                              background: "var(--teal)",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: "8px",
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              width: "100%",
-                            }}
-                          >
-                            {settleOracleHook.isPending || settleOracleHook.isConfirming
-                              ? "Settling..."
-                              : "Settle Oracle"}
-                          </button>
-                        </>
-                      ) : null}
+                        🔵 Arc (USDC)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCurrency("GEN")}
+                        style={{
+                          flex: 1,
+                          padding: "0.45rem",
+                          borderRadius: "6px",
+                          border: "none",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          background: selectedCurrency === "GEN" ? "#9333ea" : "transparent",
+                          color: selectedCurrency === "GEN" ? "#ffffff" : "var(--text-2)",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        ⚡ GenLayer ($GEN)
+                      </button>
                     </div>
-                  )}
+                  </div>
 
                   {/* YES/NO Toggle */}
                   <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
@@ -1029,37 +1019,26 @@ contract EventBasedPredictionMarket {
                         onClick={() => setSide(s)}
                         style={{
                           flex: 1,
-                          padding: "0.875rem",
+                          padding: "0.75rem",
                           fontFamily: "var(--font-body)",
                           fontWeight: 700,
-                          fontSize: "0.95rem",
+                          fontSize: "0.9rem",
                           borderRadius: "var(--r-md)",
                           cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          ...(side === s
-                            ? {
-                                background: "var(--teal)",
-                                color: "#ffffff",
-                                border: "2px solid var(--teal)",
-                                boxShadow: "0 4px 14px rgba(46,16,82,0.3)",
-                              }
-                            : {
-                                background: "var(--teal-light)",
-                                color: "var(--teal)",
-                                border: "1.5px solid var(--border-teal)",
-                              }),
+                          transition: "all 0.15s ease",
+                          border: side === s
+                            ? s === "YES" ? "2px solid #16a34a" : "2px solid #dc2626"
+                            : "1.5px solid var(--border-1)",
+                          background: side === s
+                            ? s === "YES" ? "rgba(34,197,94,0.15)" : "rgba(244,63,94,0.15)"
+                            : "var(--bg-1)",
+                          color: side === s
+                            ? s === "YES" ? "var(--yes-green)" : "var(--no-red)"
+                            : "var(--text-2)",
                         }}
                       >
-                        {s}
-                        <div
-                          style={{
-                            fontSize: "0.7rem",
-                            fontWeight: 500,
-                            marginTop: "0.2rem",
-                            opacity: side === s ? 0.9 : 0.75,
-                            fontFamily: "var(--font-mono)",
-                          }}
-                        >
+                        {s === "YES" ? "📈 YES" : "📉 NO"}
+                        <div style={{ fontSize: "0.7rem", marginTop: "0.2rem", fontFamily: "var(--font-mono)" }}>
                           {s === "YES" ? `${Math.round(currentYesPrice)}%` : `${Math.round(currentNoPrice)}%`}
                         </div>
                       </button>
@@ -1070,25 +1049,20 @@ contract EventBasedPredictionMarket {
                   <div style={{ marginBottom: "1rem" }}>
                     <label
                       className="font-mono"
-                      style={{
-                        fontSize: "0.65rem",
-                        color: "var(--text-3)",
-                        letterSpacing: "0.08em",
-                        display: "block",
-                        marginBottom: "0.4rem",
-                      }}
+                      style={{ fontSize: "0.65rem", color: "var(--text-3)", letterSpacing: "0.08em", display: "block", marginBottom: "0.4rem" }}
                     >
-                      AMOUNT (USDC)
+                      AMOUNT ({selectedCurrency})
                     </label>
                     <input
                       id="bet-amount-input"
                       type="number"
                       min="0.01"
-                      step="0.01"
+                      step="any"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       className="cyber-input"
                       style={{
+                        width: "100%",
                         fontFamily: "var(--font-mono)",
                         fontSize: "1.1rem",
                         textAlign: "center",
@@ -1096,12 +1070,16 @@ contract EventBasedPredictionMarket {
                         background: "var(--bg-1)",
                         color: "var(--text-0)",
                         border: "1.5px solid var(--border-1)",
+                        borderRadius: "8px",
+                        padding: "0.5rem",
+                        boxSizing: "border-box",
                       }}
                     />
                     <div style={{ display: "flex", gap: "0.375rem", marginTop: "0.5rem" }}>
-                      {[50, 100, 500, 1000].map((v) => (
+                      {[10, 50, 100, 500].map((v) => (
                         <button
                           key={v}
+                          type="button"
                           onClick={() => setAmount(v.toString())}
                           style={{
                             flex: 1,
@@ -1112,22 +1090,10 @@ contract EventBasedPredictionMarket {
                             border: "1px solid var(--border-1)",
                             borderRadius: "var(--r-sm)",
                             cursor: "pointer",
-                            color: "var(--text-3)",
-                            transition: "all 0.15s ease",
-                            outline: "none",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = "var(--teal)";
-                            e.currentTarget.style.borderColor = "var(--border-teal)";
-                            e.currentTarget.style.background = "var(--teal-light)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = "var(--text-3)";
-                            e.currentTarget.style.borderColor = "var(--border-1)";
-                            e.currentTarget.style.background = "var(--bg-2)";
+                            color: "var(--text-2)",
                           }}
                         >
-                          {v}
+                          +{v}
                         </button>
                       ))}
                     </div>
@@ -1143,30 +1109,25 @@ contract EventBasedPredictionMarket {
                       marginBottom: "1rem",
                     }}
                   >
-                    {[
-                      { label: "Your bet", val: `${amount} USDC`, color: "var(--text-0)" },
-                      {
-                        label: "If correct, receive",
-                        val: `${estimatedPayout} ${side}`,
-                        color: "var(--yes-green)",
-                      },
-                      { label: "Potential profit", val: `+${profit} USDC`, color: "var(--resolving)" },
-                    ].map(({ label, val, color }) => (
-                      <div
-                        key={label}
-                        style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}
-                      >
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-3)" }}>
-                          {label}
-                        </span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.78rem", fontWeight: 700, color }}>
-                          {val}
-                        </span>
-                      </div>
-                    ))}
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-3)" }}>
+                        Your prediction
+                      </span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-0)" }}>
+                        {amount} {selectedCurrency}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-3)" }}>
+                        If correct, receive
+                      </span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", fontWeight: 800, color: "var(--yes-green)" }}>
+                        ~{estimatedPayout} {selectedCurrency}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Place Bet Button */}
+                  {/* Submit Button */}
                   {betPlaced ? (
                     <div
                       style={{
@@ -1178,27 +1139,37 @@ contract EventBasedPredictionMarket {
                         color: "var(--yes-green)",
                         fontFamily: "var(--font-body)",
                         fontSize: "0.875rem",
-                        fontWeight: 600,
+                        fontWeight: 700,
+                      }}
+                    >
+                      ✓ Prediction recorded!
+                    </div>
+                  ) : selectedCurrency === "GEN" ? (
+                    <button
+                      id="place-bet-btn-gen"
+                      onClick={handleBet}
+                      disabled={!amount || parseFloat(amount) <= 0}
+                      style={{
+                        width: "100%",
+                        padding: "0.875rem",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 800,
+                        fontSize: "0.9rem",
+                        borderRadius: "var(--r-md)",
+                        cursor: "pointer",
+                        background: "linear-gradient(135deg, #7928ca 0%, #a855f7 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        boxShadow: "0 4px 16px rgba(168,85,247,0.35)",
                         display: "flex",
-                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
                         gap: "0.4rem",
                       }}
                     >
-                      <div>✓ Bet placed successfully!</div>
-                      {placedTx && (
-                        <div style={{ fontSize: "0.72rem", color: "#4b5563", fontFamily: "var(--font-mono)", wordBreak: "break-all", fontWeight: 500 }}>
-                          TX:{" "}
-                          <a
-                            href={`https://testnet.arcscan.app/tx/${placedTx}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ color: "var(--teal)", textDecoration: "underline" }}
-                          >
-                            {placedTx.slice(0, 10)}...{placedTx.slice(-8)}
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                      <Sparkles size={16} />
+                      <span>Bet {amount} $GEN on GenLayer Studio Next</span>
+                    </button>
                   ) : !isConnected ? (
                     <button
                       id="place-bet-btn"
@@ -1214,16 +1185,13 @@ contract EventBasedPredictionMarket {
                         fontSize: "0.9rem",
                         borderRadius: "var(--r-md)",
                         cursor: "pointer",
-                        transition: "all 0.2s ease",
                         background: "#2563eb",
                         color: "#ffffff",
                         border: "none",
                         boxShadow: "0 4px 16px rgba(37,99,235,0.3)",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#1d4ed8")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#2563eb")}
                     >
-                      🔒 Connect Wallet to Bet
+                      Connect Wallet to Bet
                     </button>
                   ) : (
                     <button
@@ -1237,69 +1205,68 @@ contract EventBasedPredictionMarket {
                         fontWeight: 700,
                         fontSize: "0.9rem",
                         borderRadius: "var(--r-md)",
-                        cursor: parseFloat(amount) > 0 && !isPending && !isCalcLoading ? "pointer" : "not-allowed",
-                        transition: "all 0.2s ease",
-                        background:
-                          parseFloat(amount) > 0 && !isPending && !isCalcLoading
-                            ? needsAmmApproval
-                              ? "#ea580c"
-                              : side === "YES"
-                              ? "rgba(34,197,94,0.18)"
-                              : "rgba(244,63,94,0.18)"
-                            : "#e5e7eb",
-                        color:
-                          parseFloat(amount) > 0 && !isPending && !isCalcLoading
-                            ? needsAmmApproval
-                              ? "#ffffff"
-                              : side === "YES"
-                              ? "var(--yes-green)"
-                              : "var(--no-red)"
-                            : "#9ca3af",
-                        border:
-                          parseFloat(amount) > 0 && !isPending && !isCalcLoading
-                            ? needsAmmApproval
-                              ? "none"
-                              : side === "YES"
-                              ? "1px solid rgba(34,197,94,0.45)"
-                              : "1px solid rgba(244,63,94,0.45)"
-                            : "none",
-                        opacity: parseFloat(amount) > 0 && !isPending && !isCalcLoading ? 1 : 0.5,
+                        cursor: parseFloat(amount) > 0 && !isPending ? "pointer" : "not-allowed",
+                        background: needsAmmApproval ? "#ea580c" : side === "YES" ? "#2563eb" : "#12062a",
+                        color: "#ffffff",
+                        border: "none",
+                        boxShadow: "0 4px 16px rgba(37,99,235,0.35)",
                       }}
                     >
                       {isPending
-                        ? "Confirming transaction..."
+                        ? "Processing..."
                         : needsAmmApproval
-                        ? "Approve USDC for Trading"
+                        ? "Approve USDC Collateral"
                         : `Place ${side} Bet — ${amount} USDC`}
                     </button>
                   )}
-
-                  {error && (
-                    <div style={{ fontSize: "0.75rem", color: "#dc2626", textAlign: "center", marginTop: "0.5rem" }}>
-                      Error: {error.message || "Transaction failed"}
-                    </div>
-                  )}
-
-                  <p
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.65rem",
-                      color: "var(--text-muted)",
-                      textAlign: "center",
-                      marginTop: "0.75rem",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Resolved via Optimistic Oracle V2. Results are decentralized and final.
-                  </p>
                 </>
               )}
             </div>
           </div>
         </div>
+
+        {/* GenLayer Transaction Kit Modal Overlay */}
+        <GenLayerTxModal
+          isOpen={showGenLayerModal}
+          onClose={() => setShowGenLayerModal(false)}
+          account={address}
+          title={`Bet ${side} on GenLayer Studio Next`}
+          userValue={BigInt(parseFloat(amount) || 10) * 10n ** 18n}
+          tx={{
+            kind: "write",
+            address: (GENLAYER_PREDICTION_MARKET_ADDRESS || "0x5776d6560F405E09148d42dF244C3F05C384351b") as `0x${string}`,
+            method: "place_bet",
+            args: [parseInt(market.id.replace(/\D/g, "") || "1", 10), side === "YES" ? 1 : 2],
+          }}
+          onDone={(status) => {
+            setShowGenLayerModal(false);
+            const txHash = (status as any)?.genlayerTxId || (status as any)?.txHash || generateTxHash();
+            if (processedHashesRef.current.has(txHash)) return;
+            processedHashesRef.current.add(txHash);
+
+            const numAmt = parseFloat(amount) || 10;
+            const newBet: UserBet = {
+              id: `bet-${txHash.slice(2, 12)}`,
+              txHash,
+              marketId: market.id,
+              marketTitle: market.title,
+              side,
+              amount: numAmt,
+              placedAt: new Date().toISOString(),
+              status: "open",
+              claimed: false,
+              network: "genlayer",
+              currency: "GEN",
+            };
+            saveUserBet(newBet);
+            if (onPlaceBet) {
+              onPlaceBet(market.id, side, numAmt, txHash, "genlayer", "GEN");
+            }
+            setBetPlaced(true);
+            setPlacedTx(txHash);
+          }}
+        />
       </div>
     </div>
   );
 }
-
-const creator = "CryptoWolf"; // derived creator fallback

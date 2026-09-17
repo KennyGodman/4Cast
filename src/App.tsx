@@ -9,6 +9,7 @@ import { WalletConnectModal } from "@/components/WalletConnectModal";
 import { AlertModal } from "@/components/AlertModal";
 import { MarketDetailModal } from "@/components/MarketDetailModal";
 import { AppLoadingScreen } from "@/components/AppLoadingScreen";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import { MARKETS, type MarketCardData, type DynamicMarket, dynamicToCardData } from "@/lib/markets";
 import { useWallet } from "@/contexts/WalletContext";
 import { getUserBets, saveUserBet, updateUserBet, generateTxHash, generateGenLayerPrediction, type UserBet } from "@/lib/bets";
@@ -45,20 +46,26 @@ export default function App() {
 
   // Modal Overlays
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [customAlert, setCustomAlert] = useState<{ title: string; message: string; actionUrl?: string; actionText?: string } | null>(null);
 
   // Sync theme with HTML attribute
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
+    }
     localStorage.setItem("4cast_dark_mode", String(darkMode));
   }, [darkMode]);
 
-  // Reactive listener for bets updates across modals/tabs
+  // Sync bets with storage updates
   useEffect(() => {
     const handleBetsUpdated = () => {
       setUserBets(getUserBets());
     };
-
     window.addEventListener("4cast_bets_updated", handleBetsUpdated);
     window.addEventListener("storage", handleBetsUpdated);
     return () => {
@@ -67,24 +74,19 @@ export default function App() {
     };
   }, []);
 
-  // Sync dynamic markets to localStorage
-  useEffect(() => {
-    localStorage.setItem("4cast_dynamic_markets", JSON.stringify(dynamicMarkets));
-  }, [dynamicMarkets]);
-
-  // Fetch on-chain deployed markets from API server
+  // Fetch dynamic markets from backend API
   const fetchDynamicMarkets = useCallback(async () => {
     try {
       const res = await fetch("/api/markets");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const { dynamicToCardData } = await import("@/lib/markets");
-          setDynamicMarkets(data.map(dynamicToCardData));
-        }
+      if (!res.ok) return;
+      const data: DynamicMarket[] = await res.json();
+      if (Array.isArray(data)) {
+        const cardData = data.map(dynamicToCardData);
+        setDynamicMarkets(cardData);
+        localStorage.setItem("4cast_dynamic_markets", JSON.stringify(cardData));
       }
     } catch {
-      // API server may not be running — fall back to localStorage cache silently
+      // Offline or mock mode
     }
   }, []);
 
@@ -97,42 +99,60 @@ export default function App() {
   // Combine static mock markets & dynamic on-chain markets
   const allMarkets = [...dynamicMarkets, ...MARKETS];
 
-  const handlePlaceBetLocal = async (marketId: string, side: "YES" | "NO", amount: number, customTxHash?: string) => {
-    const market = allMarkets.find((m) => m.id === marketId);
-    if (!market) return;
+  const handlePlaceBetLocal = useCallback(
+    async (
+      marketId: string,
+      side: "YES" | "NO",
+      amount: number,
+      customTxHash?: string,
+      network: "arc" | "genlayer" = "arc",
+      currency: "USDC" | "GEN" = "USDC"
+    ) => {
+      const market = allMarkets.find((m) => m.id === marketId);
+      if (!market) return;
 
-    const betId = `bet-${Date.now()}`;
-    const txHash = customTxHash || generateTxHash();
+      const txHash = customTxHash || generateTxHash();
+      const betId = `bet-${txHash.slice(2, 12)}`;
 
-    const newBet: UserBet = {
-      id: betId,
-      txHash,
-      marketId,
-      marketTitle: market.title,
-      side,
-      amount,
-      placedAt: new Date().toISOString(),
-      status: "open",
-      claimed: false,
-      network: "genlayer",
-      genlayerPrediction: generateGenLayerPrediction(market.title, side),
-    };
+      const newBet: UserBet = {
+        id: betId,
+        txHash,
+        marketId,
+        marketTitle: market.title,
+        side,
+        amount,
+        placedAt: new Date().toISOString(),
+        status: "open",
+        claimed: false,
+        network,
+        currency,
+        genlayerPrediction: generateGenLayerPrediction(market.title, side),
+      };
 
-    saveUserBet(newBet);
-    setUserBets((prev) => [newBet, ...prev.filter((b) => b.id !== betId)]);
-    return txHash;
-  };
+      saveUserBet(newBet);
+      setUserBets(getUserBets());
+      return txHash;
+    },
+    [allMarkets]
+  );
 
-  const handleClaimPayoutLocal = async (betId: string, _marketAddress: string) => {
+  const handleClaimPayoutLocal = useCallback(async (betId: string, _marketAddress: string) => {
     updateUserBet(betId, { claimed: true, status: "settled" });
-    setUserBets((prev) =>
-      prev.map((b) => (b.id === betId ? { ...b, claimed: true, status: "settled" } : b))
-    );
+    setUserBets(getUserBets());
     setCustomAlert({
       title: "Winnings Claimed",
       message: "The payout position has been settled and funds recorded to your wallet.",
     });
-  };
+  }, []);
+
+  const handleFastSettleBet = useCallback((betId: string, outcome: "YES" | "NO") => {
+    updateUserBet(betId, { status: "settled", outcome });
+    setUserBets(getUserBets());
+    setCustomAlert({
+      title: "Consensus Finalized!",
+      message: `GenLayer AI jury (5/5 validators) verified web ground truth and settled the market as ${outcome}. You can now claim your winnings!`,
+    });
+  }, []);
 
   const handleCreateMarketLocal = (newMarket: MarketCardData) => {
     setDynamicMarkets((prev) => [newMarket, ...prev]);
@@ -158,23 +178,11 @@ export default function App() {
       <>
         <LandingPage
           onLaunchApp={() => handleLaunchApp()}
-          onSelectMarket={(m) => handleLaunchApp(m)}
+          onSelectMarket={(market) => handleLaunchApp(market)}
           darkMode={darkMode}
           onToggleDarkMode={() => setDarkMode((prev) => !prev)}
           markets={allMarkets}
         />
-
-        {/* Modal overlays in home mode if opened */}
-        {selectedMarket && (
-          <MarketDetailModal
-            market={selectedMarket}
-            onClose={() => setSelectedMarket(null)}
-            onConnectClick={() => setShowWalletModal(true)}
-            bets={userBets}
-            onPlaceBet={handlePlaceBetLocal}
-            onShowAlert={(alert) => setCustomAlert(alert)}
-          />
-        )}
 
         {showWalletModal && (
           <WalletConnectModal
@@ -182,31 +190,12 @@ export default function App() {
             onShowAlert={(alert) => setCustomAlert(alert)}
           />
         )}
-
-        {customAlert && (
-          <AlertModal
-            title={customAlert.title}
-            message={customAlert.message}
-            actionUrl={customAlert.actionUrl}
-            actionText={customAlert.actionText}
-            onClose={() => setCustomAlert(null)}
-          />
-        )}
       </>
     );
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        background: "var(--bg-0)",
-        color: "var(--text-0)",
-        transition: "background 0.3s ease, color 0.3s ease",
-      }}
-    >
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Loading Overlay Screen */}
       {isLoadingApp && (
         <AppLoadingScreen
@@ -225,6 +214,7 @@ export default function App() {
         onToggleDarkMode={() => setDarkMode((prev) => !prev)}
         onConnectClick={() => setShowWalletModal(true)}
         onGoHome={() => setView("home")}
+        onOpenOnboarding={() => setShowOnboardingModal(true)}
       />
 
       {/* Main Container */}
@@ -253,6 +243,7 @@ export default function App() {
               bets={userBets}
               markets={allMarkets}
               onClaimPayout={handleClaimPayoutLocal}
+              onSettleBet={handleFastSettleBet}
             />
           )}
 
@@ -301,10 +292,8 @@ export default function App() {
           Predict opinions that matter to you.
         </h2>
         <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap", marginTop: "1.5rem" }}>
-          <a
-            href="https://www.youtube.com/results?search_query=prediction+markets"
-            target="_blank"
-            rel="noreferrer"
+          <button
+            onClick={() => setShowOnboardingModal(true)}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -314,14 +303,14 @@ export default function App() {
               background: "var(--bg-3)",
               border: "1.5px solid var(--border-1)",
               color: "var(--text-0)",
-              textDecoration: "none",
               fontSize: "0.82rem",
               fontWeight: 600,
+              cursor: "pointer",
               transition: "all 0.15s ease",
             }}
           >
-            <span>Learn Prediction Markets</span>
-          </a>
+            <span>📖 Platform Guide & Dual-Network Architecture</span>
+          </button>
         </div>
         <p
           style={{
@@ -331,7 +320,7 @@ export default function App() {
             color: "var(--text-3)",
           }}
         >
-          Powered by Circle passkeys & UMA Optimistic Oracle on Arc Testnet.
+          Powered by Circle passkeys on Arc Testnet & GenVM Intelligent Contracts on GenLayer Studio Next.
         </p>
       </footer>
 
@@ -343,6 +332,7 @@ export default function App() {
           onConnectClick={() => setShowWalletModal(true)}
           bets={userBets}
           onPlaceBet={handlePlaceBetLocal}
+          onSettleBet={handleFastSettleBet}
           onShowAlert={(alert) => setCustomAlert(alert)}
         />
       )}
@@ -354,6 +344,13 @@ export default function App() {
           onShowAlert={(alert) => setCustomAlert(alert)}
         />
       )}
+
+      {/* Onboarding Guide Modal */}
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+        onStartDemo={() => setActiveTab("markets")}
+      />
 
       {/* Alert Overlay */}
       {customAlert && (
