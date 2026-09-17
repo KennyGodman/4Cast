@@ -117,6 +117,8 @@ export function OnboardingModal({ isOpen, onClose, onStartDemo }: OnboardingModa
       onClick={onClose}
     >
       <div
+        className="modal-container"
+        role="dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%",

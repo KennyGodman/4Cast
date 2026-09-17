@@ -197,6 +197,7 @@ export function LandingPage({
 
           {/* Nav links */}
           <nav
+            className="landing-nav hide-mobile"
             style={{
               display: "flex",
               alignItems: "center",
@@ -298,6 +299,7 @@ export function LandingPage({
 
       {/* ── Hero Banner Section ────────────────────────────────── */}
       <section
+        className="hero-grid-layout"
         style={{
           padding: "5rem 1.5rem 4rem",
           maxWidth: "1280px",
@@ -870,10 +872,11 @@ export function LandingPage({
 
             {/* Two Interwoven Bet Cards */}
             <div
+              className="showcase-cards-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-                gap: "3rem",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))",
+                gap: "2rem",
                 position: "relative",
                 zIndex: 1,
               }}
@@ -1690,7 +1693,7 @@ export function LandingPage({
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
+          <div className="how-it-works-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
             {[
               {
                 step: 1,
@@ -1779,7 +1782,7 @@ export function LandingPage({
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1.5rem" }}>
+        <div className="featured-markets-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1.5rem" }}>
           {featuredMarkets.map((m, idx) => (
             <motion.div
               key={m.id}

@@ -425,6 +425,8 @@ function MarketDetailModalInner({
       onClick={onClose}
     >
       <div
+        className="modal-container"
+        role="dialog"
         style={{
           background: "var(--bg-1)",
           border: "1.5px solid var(--border-1)",

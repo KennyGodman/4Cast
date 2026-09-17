@@ -357,6 +357,8 @@ function BetConfirmModalInner({ market, initialSide, onClose, onPlaceBet }: Inne
       }}
     >
       <div
+        className="modal-container"
+        role="dialog"
         style={{
           width: "100%",
           maxWidth: "420px",

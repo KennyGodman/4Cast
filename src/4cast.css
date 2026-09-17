@@ -794,11 +794,22 @@ body {
   .nav-tab-label {
     display: none !important;
   }
+  .guide-btn-text {
+    display: none !important;
+  }
+  #guide-btn {
+    padding: 0.35rem 0.5rem !important;
+  }
   .header-nav-btn {
     padding: 0.35rem 0.45rem;
   }
   .header-search-wrap {
     max-width: 130px;
+  }
+  .hero-grid-layout {
+    grid-template-columns: 1fr !important;
+    gap: 2.5rem !important;
+    padding: 3.5rem 1.25rem 2.5rem !important;
   }
 }
 
@@ -832,6 +843,7 @@ body {
     padding: 1.15rem !important;
     border-radius: 16px !important;
     margin: 0 auto;
+    box-sizing: border-box !important;
   }
 
   /* Market Detail Modal Grid on Mobile */
@@ -854,6 +866,13 @@ body {
   .hero-buttons button, .hero-buttons a {
     width: 100% !important;
     justify-content: center !important;
+  }
+
+  .how-it-works-grid,
+  .featured-markets-grid,
+  .showcase-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
   }
 
   .stats-grid, .features-grid {
@@ -905,8 +924,52 @@ body {
     padding: 0.85rem !important;
   }
 
+  .market-detail-grid {
+    padding: 0.85rem !important;
+  }
+
+  .portfolio-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.6rem !important;
+  }
+
   .yes-btn, .no-btn {
     padding: 0.4rem 0.25rem !important;
     font-size: 0.78rem !important;
   }
 }
+
+/* Ultra-compact Phones (<= 360px down to 320px) */
+@media (max-width: 360px) {
+  .header-inner {
+    padding: 0 0.35rem !important;
+    gap: 0.2rem !important;
+  }
+
+  #header-search {
+    max-width: 85px !important;
+    font-size: 0.72rem !important;
+    padding-left: 1.5rem !important;
+  }
+
+  .header-nav-btn {
+    padding: 0.25rem 0.35rem !important;
+  }
+
+  .modal-container, [role="dialog"] {
+    width: 98vw !important;
+    max-width: 98vw !important;
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+  }
+
+  .portfolio-metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cat-pill {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.72rem !important;
+  }
+}
+

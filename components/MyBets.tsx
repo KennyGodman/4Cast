@@ -237,7 +237,7 @@ export function MyBets({ bets: propBets, markets, onClaimPayout, onSettleBet, on
       </div>
 
       {/* Summary Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
+      <div className="portfolio-metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.85rem" }}>
         {[
           {
             icon: DollarSign,
@@ -1069,6 +1069,8 @@ function AISettlementModal({
       onClick={onClose}
     >
       <div
+        className="modal-container"
+        role="dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%",
